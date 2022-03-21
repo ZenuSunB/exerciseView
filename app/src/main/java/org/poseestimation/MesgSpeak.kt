@@ -23,7 +23,6 @@ class MesgSpeak(private val activity: Activity,
 //            })
             tts.setPitch(1.0f)
             // 设置语速
-            // 设置语速
             tts.setSpeechRate(1.0f)
             val localeCH = Locale.CHINESE
 

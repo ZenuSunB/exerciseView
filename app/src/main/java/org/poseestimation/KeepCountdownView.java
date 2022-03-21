@@ -14,10 +14,7 @@ import android.util.TypedValue;
 import android.view.View;
 import android.view.animation.LinearInterpolator;
 
-/**
- * Created by ccy(17022) on 2019/2/26 下午2:10
- * 仿Keep休息倒计时控件
- */
+
 public class KeepCountdownView extends View {
 
     //默认值

@@ -1,0 +1,15 @@
+{
+  "scorebypart"        : [[.....],[.....],[.....]......[1.....]],
+  "completeness"       : [ boolen,boolen,boolen......boolen],
+  "exerciseIntensity"  : [ double, double, double...... double],
+  "DTW"  : {
+            "score": double
+            "matrix":[[................]
+                      [................]
+                      [................]
+                              .
+                              .
+                              .
+                      [................]]
+           }
+}

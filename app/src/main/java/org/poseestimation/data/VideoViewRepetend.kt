@@ -16,13 +16,13 @@ class VideoViewRepetend(
     private var mainActivity: Activity,
     private var videoView: VideoView,
     private var context: Context,
-    private var listener: VideoViewRepetendListener?=null,
-    private var voicePlayer :MediaPlayer)
+    private var listener: VideoViewRepetendListener?=null)
 {
-    private lateinit var schedule: ExerciseSchedule
-//    private val listener: VideoViewRepetendListener ?= null
+
+    public lateinit var schedule: ExerciseSchedule
     //记录下当前播放到那哪一组运动视频
     public var index=0
+    private var voicePlayer=MediaPlayer()
     init {
         schedule=ExerciseSchedule(JSONmeg)
         setPlayVideo()
@@ -36,7 +36,7 @@ class VideoViewRepetend(
         })
         videoView.setOnCompletionListener{
             //倒计时完毕后开始播放运动视频
-            listener?.onExerciseStart()//运动开始触发,进入运动视频
+            listener?.onExerciseStart(index,"11111")//运动开始触发,进入运动视频
             // uri = "android.resource://" + context.packageName + "/" +  schedule.exerciseName.get(i++)，
             val ExerciseDounturi = "android.resource://" + context.packageName + "/" + R.raw.sample3
             videoView.setVideoURI(Uri.parse(ExerciseDounturi));
@@ -46,7 +46,7 @@ class VideoViewRepetend(
             videoView.setOnCompletionListener {
                 //运动视频结束，开始进入休息界面
                 index++
-                listener?.onExerciseEnd()//运动结束触发，进入休息视频
+                listener?.onExerciseEnd(index,"11111",schedule.tags[schedule.exerciseId[index]])//运动结束触发，进入休息视频
                 val Relaxingturi = "android.resource://" + context.packageName + "/" + R.raw.relaxtimer
                 videoView.setVideoURI(Uri.parse(Relaxingturi));
                 videoView.setOnPreparedListener { it.isLooping = false }
@@ -55,7 +55,6 @@ class VideoViewRepetend(
                     //休息视频运动完毕,重新开始播放倒计时
                     setPlayVideo()
                 }
-
             }
         }
 
@@ -65,20 +64,14 @@ class VideoViewRepetend(
         videoView.setOnPreparedListener { it.isLooping = false }
 
         //播放倒计时提示声音
-        val fd = context.assets.openFd("countdownfloder/countdownfive.mp3");
+        val fd = context.assets.openFd("voice/countdown/5countdown.mp3");
         voicePlayer.setDataSource(fd)
-        voicePlayer.setOnCompletionListener { }
         voicePlayer.prepare()
-
-
-
-
-
-
+        voicePlayer.start()
     }
 
     interface VideoViewRepetendListener {
-        fun onExerciseStart()
-        fun onExerciseEnd()
+        fun onExerciseStart(index:Int,samplevideoName:String)
+        fun onExerciseEnd(index:Int,samplevideoName:String,samplevideoTendency:MutableList<Int>)
     }
 }

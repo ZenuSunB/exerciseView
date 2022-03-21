@@ -26,6 +26,7 @@ import android.graphics.Matrix
 import android.graphics.Rect
 import android.hardware.camera2.*
 import android.media.ImageReader
+import android.media.MediaPlayer
 import android.os.Handler
 import android.os.HandlerThread
 import android.util.Log
@@ -46,16 +47,21 @@ import org.poseestimation.data.ResJSdata
 import org.poseestimation.data.Sample
 import org.poseestimation.data.VideoViewRepetend
 import org.poseestimation.ml.PoseDetector
+import org.poseestimation.utils.BoneVectorPart
+import org.poseestimation.utils.Voice
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.util.*
+import kotlin.random.Random
 
 class CameraSource(
 //    private val videoView:VideoView,0...........................................................................................................................................................................................................................3
     private val surfaceView: SurfaceView,
     private val listener: CameraSourceListener? = null,
-    private val context: Context? = null,
-    private val mainActivity: Activity
+    private val context: Context,
+    private val mainActivity: Activity,
+    private val firstSamplevideoTendency :MutableList<Int>,
+    private val firstSamplevideoName :String
 ) {
 
     companion object {
@@ -101,6 +107,7 @@ class CameraSource(
     private var imageReaderHandler: Handler? = null
     private var cameraId: String = ""
 
+    private val  voice=Voice(context)
 
     //标准视频动作数据
     public var Samples: MutableList<Sample> = arrayListOf<Sample>()
@@ -117,15 +124,18 @@ class CameraSource(
     //初始化摄像机，并设置监听器，如果有可用图像就
     suspend fun initCamera() {
         camera = openCamera(cameraManager, cameraId)
-        Samples.add(Sample("sample3-10fps.processed.json",context!!, object:Sample.scorelistener{
-            override fun onFrameScoreHeight(FramScore: Int) {
-                MesgSpeak(mainActivity,"真不戳",true)
+
+        Samples.add(Sample("sample3-10fps.processed.json",context,1,firstSamplevideoTendency,object:Sample.scorelistener{
+            override fun onFrameScoreHeight(FrameScore: Int,part:Int) {
+                voice.voiceRemind(FrameScore,part)
             }
-            override fun onFrameScoreLow(FramScore: Int) {
-                MesgSpeak(mainActivity,"就这，就这啊",true)
+            override fun onFrameScoreLow(FrameScore: Int,part:Int) {
+
             }
         }))
         Users.add(ResJSdata())
+
+
         imageReader =
             ImageReader.newInstance(PREVIEW_WIDTH, PREVIEW_HEIGHT, ImageFormat.YUV_420_888, 3)
         imageReader?.setOnImageAvailableListener({ reader ->
@@ -262,7 +272,7 @@ class CameraSource(
         //部位分数
         var scoreBypart: MutableList<Double> = mutableListOf<Double>()
         //matrix结构的用户关节点
-        var keypointmatrix:Jama.Matrix =Jama.Matrix(0,0)
+        var uservector:Jama.Matrix =Jama.Matrix(0,0)
 
         if(isImageprocess==true) {
             Samples[index].clock()
@@ -278,9 +288,9 @@ class CameraSource(
                         val S=Samples[index].exec(it)
                         score = S.first
                         scoreBypart = S.second
-                        keypointmatrix = S.third
+                        uservector = S.third
                     }
-                    Users[index].append(scoreBypart,keypointmatrix)
+                    Users[index].append(scoreBypart,uservector)
                     listener?.onImageprocessListener(score.toInt())
                     }
                 }
@@ -390,6 +400,7 @@ class CameraSource(
         isImageprocess=flag
         return isImageprocess
     }
+
 
 
 }

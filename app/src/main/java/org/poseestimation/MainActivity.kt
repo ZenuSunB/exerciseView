@@ -5,9 +5,9 @@ import android.app.AlertDialog
 import android.app.Dialog
 import android.content.pm.PackageManager
 import android.media.MediaPlayer
-import android.net.Uri
 import android.os.*
 import android.speech.tts.TextToSpeech
+import android.speech.tts.Voice
 import android.view.SurfaceView
 import android.view.WindowManager
 import android.widget.MediaController
@@ -22,14 +22,11 @@ import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.poseestimation.camera.CameraSource
-import org.poseestimation.data.Device
-import org.poseestimation.data.ResJSdata
-import org.poseestimation.data.Sample
-import org.poseestimation.data.VideoViewRepetend
+import org.poseestimation.data.*
 import org.poseestimation.ml.ModelType
 import org.poseestimation.ml.MoveNet
-
-
+import kotlin.random.Random
+import org.poseestimation.*
 class MainActivity :AppCompatActivity() {
     companion object {
         private const val FRAGMENT_DIALOG = "dialog"
@@ -41,13 +38,13 @@ class MainActivity :AppCompatActivity() {
     private var device = Device.GPU
     private lateinit var msquareProgress:SquareProgress
     private lateinit var videoView: VideoView
-    private lateinit var voicePlayer:MediaPlayer
     private lateinit var mTextToSpeech: TextToSpeech
     private lateinit var mediaController: MediaController
     private lateinit var keep1:KeepCountdownView
     private lateinit var textView: TextView
     private var cameraSource: CameraSource? = null
 
+    private val voice= org.poseestimation.utils.Voice(this)
     private var videoviewrepetend:VideoViewRepetend? =null
 
     private val requestPermissionLauncher =
@@ -89,16 +86,14 @@ class MainActivity :AppCompatActivity() {
         openCamera()
         createPoseEstimator()
         videoView.start();
-        voicePlayer.start()
-
     }
 
     private fun initView(){
         videoView = findViewById<VideoView>(R.id.videoView)
         mediaController = MediaController(this)
         videoView.setMediaController(mediaController)
-        voicePlayer= MediaPlayer()
 
+        val mainActivity=this
         val JsonMeg="{\n" +
                 "    \"data\": [\n" +
                 "        {\n" +
@@ -137,28 +132,29 @@ class MainActivity :AppCompatActivity() {
                 "            \"groups\": \"2\"\n" +
                 "        }]\n" +
                 "}"
-
-       val mainActivity=this
         videoviewrepetend= VideoViewRepetend(JsonMeg,this,videoView,this.baseContext,object:VideoViewRepetend.VideoViewRepetendListener{
-                    override fun onExerciseEnd() {
-                        cameraSource!!.setProcessImageFlag(false)
-                        cameraSource!!.index=videoviewrepetend!!.index
-                        cameraSource!!.Samples.add(Sample("sample3-10fps.processed.json",baseContext,object:Sample.scorelistener{
-                            override fun onFrameScoreHeight(FramScore: Int) {
-                                MesgSpeak(mainActivity,"真不戳",true)
-                            }
-                            override fun onFrameScoreLow(FramScore: Int) {
-                                MesgSpeak(mainActivity,"就这，就这啊",true)
-                            }
-                        }))
-                        cameraSource!!.Users.add(ResJSdata())
-                    }
+            override fun onExerciseEnd(index:Int,samplevideoName:String,samplevideoTendency:MutableList<Int>) {
+                //一轮运动完成，开始创建下一轮运动的数据结构
+                //休息阶段时关闭图像处理
+                cameraSource!!.setProcessImageFlag(false)
+                //更新came索引，使其图像处理绑定到下一轮运动的数据结构中
+                cameraSource!!.index=videoviewrepetend!!.index
+                //创建新一轮运动数据结构
+                cameraSource!!.Samples.add(Sample("sample3-10fps.processed.json",baseContext,1,samplevideoTendency,object:Sample.scorelistener{
+                    override fun onFrameScoreHeight(FrameScore: Int,part:Int) {
 
-                    override fun onExerciseStart() {
-                        cameraSource!!.setProcessImageFlag(true)
                     }
-                },voicePlayer)
+                    override fun onFrameScoreLow(FrameScore: Int,part:Int) {
 
+                    }
+                }))
+                cameraSource!!.Users.add(ResJSdata())
+            }
+
+            override fun onExerciseStart(index:Int,samplevideoName:String) {
+                cameraSource!!.setProcessImageFlag(true)
+            }
+        })
     }
     override fun onResume() {
       cameraSource?.resume()
@@ -195,7 +191,10 @@ class MainActivity :AppCompatActivity() {
                         override fun onFPSListener(fps: Int) {
                             showToast("fps:"+fps.toString())
                         }
-                    },this.baseContext,this).apply {
+                    },this.baseContext,
+                        this,
+                        videoviewrepetend?.schedule!!.tags.get(videoviewrepetend!!.index),
+                        videoviewrepetend?.schedule!!.exerciseName.get(videoviewrepetend!!.index)).apply {
                         prepareCamera()
                     }
                 lifecycleScope.launch(Dispatchers.Main) {
@@ -230,6 +229,7 @@ class MainActivity :AppCompatActivity() {
             }
         }
     }
+
 
     private fun showToast(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_LONG).show()

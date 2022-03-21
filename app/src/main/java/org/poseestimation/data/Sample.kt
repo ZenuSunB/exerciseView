@@ -13,18 +13,95 @@ import java.io.InputStreamReader
 class Sample(
     private var name:String,
     private val context: Context,
+    private val id: Int,
+    private val samplevideoTendency:MutableList<Int>,
     private val listener: Sample.scorelistener? = null) {
     private lateinit var  sampleKeypointsList: List<Matrix>
     private lateinit var  sampleVectorsList: List<Matrix>
     private lateinit var  samplePersonsList: List<Person>
     var count=-1
     var totalScore=50.0
-    var bodyWeight:List<Double> = listOf(0.0,10.0/38,10.0/38,0.0,0.0,0.0,8.0/38,0.0,0.0,5.0/38,5.0/38)
+    var bodyWeight:MutableList<Double> = arrayListOf(0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0)
+        //arrayListOf(0.0,10.0/38,10.0/38,0.0,0.0,0.0,8.0/38,0.0,0.0,5.0/38,5.0/38)
     init
     {
-        name?.let{sampleKeypointsList=read_csv(it)}
+        name?.let{sampleKeypointsList=read_json(it)}
         sampleKeypointsList?.let{sampleVectorsList= DataTypeTransfor().get_posture_vectorList_Jama(it)}
         sampleKeypointsList?.let{samplePersonsList= DataTypeTransfor().ListMatrix2listPerson_Jama(it)}
+        var sum=0.0
+        for(i in 0..samplevideoTendency.count()-1)
+        {
+            when(i)
+            {
+                0-> {
+                    bodyWeight[6] += samplevideoTendency[i].toDouble()
+                    bodyWeight[9] += samplevideoTendency[i].toDouble()
+                    bodyWeight[10] += samplevideoTendency[i].toDouble()
+                    sum+=3*samplevideoTendency[i].toDouble()
+                }
+                1-> {
+                    bodyWeight[6] += samplevideoTendency[i].toDouble()
+                    bodyWeight[9] += samplevideoTendency[i].toDouble()
+                    bodyWeight[10] += samplevideoTendency[i].toDouble()
+                    sum+=3*samplevideoTendency[i].toDouble()
+                }
+                2-> {
+                    bodyWeight[6] += samplevideoTendency[i].toDouble()
+                    bodyWeight[6] += samplevideoTendency[i].toDouble()
+                    sum+=2*samplevideoTendency[i].toDouble()
+                }
+                3-> {
+                    bodyWeight[1] += samplevideoTendency[i].toDouble()
+                    bodyWeight[2] += samplevideoTendency[i].toDouble()
+                    bodyWeight[1] += samplevideoTendency[i].toDouble()
+                    bodyWeight[2] += samplevideoTendency[i].toDouble()
+                    sum+=4*samplevideoTendency[i].toDouble()
+                }
+                4-> {
+                    bodyWeight[5] += samplevideoTendency[i].toDouble()
+                    bodyWeight[9] += samplevideoTendency[i].toDouble()
+                    bodyWeight[10] += samplevideoTendency[i].toDouble()
+                    sum+=3*samplevideoTendency[i].toDouble()
+                }
+                5-> {
+                    bodyWeight[5] += samplevideoTendency[i].toDouble()
+                    bodyWeight[5] += samplevideoTendency[i].toDouble()
+                    sum+=2*samplevideoTendency[i].toDouble()
+                }
+                6-> {
+                    bodyWeight[5] += samplevideoTendency[i].toDouble()
+                    bodyWeight[5] += samplevideoTendency[i].toDouble()
+                    sum+=2*samplevideoTendency[i].toDouble()
+                }
+                7-> {
+                    bodyWeight[2] += samplevideoTendency[i].toDouble()
+                    bodyWeight[2] += samplevideoTendency[i].toDouble()
+                    bodyWeight[3] += samplevideoTendency[i].toDouble()
+                    bodyWeight[3] += samplevideoTendency[i].toDouble()
+                    sum+=4*samplevideoTendency[i].toDouble()
+                }
+                8-> {
+                    bodyWeight[0] += samplevideoTendency[i].toDouble()
+                    bodyWeight[1] += samplevideoTendency[i].toDouble()
+                    bodyWeight[2] += samplevideoTendency[i].toDouble()
+                    bodyWeight[3] += samplevideoTendency[i].toDouble()
+                    bodyWeight[4] += samplevideoTendency[i].toDouble()
+                    bodyWeight[5] += samplevideoTendency[i].toDouble()
+                    bodyWeight[6] += samplevideoTendency[i].toDouble()
+                    bodyWeight[7] += samplevideoTendency[i].toDouble()
+                    bodyWeight[8] += samplevideoTendency[i].toDouble()
+                    bodyWeight[9] += samplevideoTendency[i].toDouble()
+                    bodyWeight[10] += samplevideoTendency[i].toDouble()
+                    sum+=11*samplevideoTendency[i].toDouble()
+                }
+
+            }
+
+        }
+        for(i in 0..bodyWeight.count()-1) {
+            bodyWeight[i]=bodyWeight[i]/sum
+        }
+
     }
 
 
@@ -39,7 +116,7 @@ class Sample(
 
     public fun reSet( ampleName:String)
     {
-        name?.let{sampleKeypointsList=read_csv(it)}
+        name?.let{sampleKeypointsList=read_json(it)}
         sampleKeypointsList?.let{sampleVectorsList= DataTypeTransfor().get_posture_vectorList_Jama(it)}
         sampleKeypointsList?.let{samplePersonsList= DataTypeTransfor().ListMatrix2listPerson_Jama(it)}
         count=-1
@@ -63,7 +140,7 @@ class Sample(
 
         //获得Matrix结构的用户关节点数据
         val usrKeypointsList = DataTypeTransfor().listPerson2ListMatrix_Jama(usrPersonsList)
-
+        var usrVectors = Matrix(0,0)
         //开始在选定的标准视频动作帧之间进行计算，选择分数最高的一帧
         for (i in begin..end - 1) {
 
@@ -74,7 +151,7 @@ class Sample(
             )
 
             //获得用户骨架向量数据
-            val usrVectors = DataTypeTransfor().get_posture_vector_Jama(affAffine_usrKeypoints)
+            var tempUsrVectors = DataTypeTransfor().get_posture_vector_Jama(affAffine_usrKeypoints)
 
             //初始化局部数据结构
             var tempScoreByPart = mutableListOf<Double>(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
@@ -85,7 +162,7 @@ class Sample(
             {
                 tempScoreByPart[j] = DTWprocess().cosine_point_distance_Jama(
                     DataTypeTransfor().divide_Jama(
-                        listOf(usrVectors),
+                        listOf(tempUsrVectors),
                         BoneVectorPart.fromInt(j)
                     ).get(0),
                     DataTypeTransfor().divide_Jama(
@@ -99,40 +176,33 @@ class Sample(
             {
                 scoreByPart = tempScoreByPart
                 markScore = tempMarkScore
+                usrVectors= tempUsrVectors
             }
         }
 
         if (markScore > 90) {
-            if(count%20==0) {
-                listener?.onFrameScoreHeight(markScore.toInt())
-            }
             if (totalScore < 99.7) {
                 totalScore += 0.3
             }
         } else if (markScore > 80) {
+
             if (totalScore < 99.9) {
                 totalScore += 0.15
             }
         } else if (markScore > 50) {
-            if(count%20==0) {
-                listener?.onFrameScoreLow(markScore.toInt())
-            }
-
             if (totalScore > 0.3) {
                 totalScore -= 0.3
             }
         } else {
-            if (count % 20 == 0) {
-                listener?.onFrameScoreLow(markScore.toInt())
-                if (totalScore >= 0.6) {
-                    totalScore -= 0.6
-                }
+            if (totalScore >= 0.6) {
+                totalScore -= 0.6
             }
         }
-        return Triple(totalScore,scoreByPart,usrKeypointsList.get(0))
+        listener?.onFrameScoreHeight(100,2)
+        return Triple(totalScore,scoreByPart,usrVectors)
     }
 
-    fun read_csv(filename:String):List<Jama.Matrix>
+    fun read_json(filename:String):List<Jama.Matrix>
     {
         var posVecList:MutableList<Jama.Matrix> = arrayListOf<Jama.Matrix>()
         context?.let {
@@ -164,7 +234,7 @@ class Sample(
 
     interface scorelistener
     {
-        fun onFrameScoreHeight(FramScore:Int)
-        fun onFrameScoreLow(FramScore:Int)
+        fun onFrameScoreHeight(FrameScore:Int,part:Int)
+        fun onFrameScoreLow(FrameScore:Int,part:Int)
     }
 }

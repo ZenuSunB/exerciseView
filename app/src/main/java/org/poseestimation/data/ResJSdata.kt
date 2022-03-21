@@ -1,6 +1,8 @@
 package org.poseestimation.data
 
 import Jama.Matrix
+import org.json.JSONArray
+import org.json.JSONObject
 import org.poseestimation.utils.DTWprocess
 
 class ResJSdata {
@@ -18,7 +20,7 @@ class ResJSdata {
     //运动强度
     private lateinit var exerciseIntensity:MutableList<Double>
     //DTW
-    private var dtwres:Dtwresponse?=null
+    private lateinit var dtwres:Dtwresponse
 
     init {
         Vectorslist = mutableListOf<Matrix>()
@@ -51,8 +53,55 @@ class ResJSdata {
         dtwres?.score
     }
 
-    fun toJson()
+    fun toJson():JSONObject
     {
+        var ALLresobj:JSONObject = JSONObject()//最终的返回数据
+
+        var DTWresobj:JSONObject = JSONObject()//DTW的返回数据
+        var DTWscore:JSONArray = JSONArray()//DTW的返回数据
+        var DTWmatrix:JSONArray = JSONArray()//DTW的返回数据
+
+        var CPNresArray:JSONArray = JSONArray()//完成度的返回数据
+        var EXTresArray:JSONArray = JSONArray()//运动强度的返回数据
+
+        var SCOresArray:JSONArray = JSONArray()//运动分数的返回数据
+        val sampleNum=dtwres.DTW_matrix[0]?.count()
+
+        for(i in 0..count-1)
+        {
+            //获得完成度
+            CPNresArray.put(completeness[i])
+
+            //获得运动强度，size-1
+            if(i!=count-1)
+                EXTresArray.put(exerciseIntensity[i])
+
+            //获得动作分数
+            var SCOline:JSONArray = JSONArray()
+            for(j in 0..10)
+            {
+                SCOline.put(scoreBypart[i][j])
+            }
+            SCOresArray.put(SCOline)
+
+            //获得DTW矩阵每行
+            var DTWline:JSONArray = JSONArray()
+            for(j in 0..sampleNum-1)
+                DTWline.put(dtwres.DTW_matrix[i][j])
+            DTWmatrix.put(DTWline)
+
+        }
+
+        DTWscore.put(dtwres.score)
+        DTWresobj.put("matrix",DTWmatrix)
+        DTWresobj.put("score",DTWscore)
+
+        ALLresobj.put("scorebypart",SCOresArray)
+        ALLresobj.put("completeness",CPNresArray)
+        ALLresobj.put("exerciseIntensity",EXTresArray)
+        ALLresobj.put("DTW",DTWresobj)
+
+        return ALLresobj
 
     }
 
