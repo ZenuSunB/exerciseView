@@ -85,7 +85,7 @@ class MainActivity :AppCompatActivity() {
         super.onStart()
         openCamera()
         createPoseEstimator()
-        videoView.start();
+
     }
 
     private fun initView(){
@@ -142,7 +142,7 @@ class MainActivity :AppCompatActivity() {
                 //创建新一轮运动数据结构
                 cameraSource!!.Samples.add(Sample("sample3-10fps.processed.json",baseContext,1,samplevideoTendency,object:Sample.scorelistener{
                     override fun onFrameScoreHeight(FrameScore: Int,part:Int) {
-
+                        voice.voiceRemind(FrameScore,part)
                     }
                     override fun onFrameScoreLow(FrameScore: Int,part:Int) {
 

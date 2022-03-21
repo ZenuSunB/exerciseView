@@ -22,7 +22,7 @@ class VideoViewRepetend(
     public lateinit var schedule: ExerciseSchedule
     //记录下当前播放到那哪一组运动视频
     public var index=0
-    private var voicePlayer=MediaPlayer()
+    lateinit var voicePlayer:MediaPlayer
     init {
         schedule=ExerciseSchedule(JSONmeg)
         setPlayVideo()
@@ -34,11 +34,12 @@ class VideoViewRepetend(
                 mp.setVideoScalingMode(MediaPlayer.VIDEO_SCALING_MODE_SCALE_TO_FIT);
             }
         })
+
         videoView.setOnCompletionListener{
             //倒计时完毕后开始播放运动视频
             listener?.onExerciseStart(index,"11111")//运动开始触发,进入运动视频
             // uri = "android.resource://" + context.packageName + "/" +  schedule.exerciseName.get(i++)，
-            val ExerciseDounturi = "android.resource://" + context.packageName + "/" + R.raw.sample3
+            val ExerciseDounturi = "android.resource://" + context.packageName + "/" + R.raw.sample2
             videoView.setVideoURI(Uri.parse(ExerciseDounturi));
             videoView.setOnPreparedListener { it.isLooping = false }
             videoView.start()
@@ -62,9 +63,11 @@ class VideoViewRepetend(
         val countDounturi = "android.resource://" + context.packageName + "/" + R.raw.countdown
         videoView.setVideoURI(Uri.parse(countDounturi));
         videoView.setOnPreparedListener { it.isLooping = false }
+        videoView.start();
 
         //播放倒计时提示声音
         val fd = context.assets.openFd("voice/countdown/5countdown.mp3");
+        voicePlayer=MediaPlayer()
         voicePlayer.setDataSource(fd)
         voicePlayer.prepare()
         voicePlayer.start()
