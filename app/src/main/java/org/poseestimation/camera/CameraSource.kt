@@ -107,6 +107,7 @@ class CameraSource(
     private var imageReaderHandler: Handler? = null
     private var cameraId: String = ""
 
+    //语言播放器
     private val  voice=Voice(context)
 
     //标准视频动作数据
@@ -127,10 +128,10 @@ class CameraSource(
 
         Samples.add(Sample("sample3-10fps.processed.json",context,1,firstSamplevideoTendency,object:Sample.scorelistener{
             override fun onFrameScoreHeight(FrameScore: Int,part:Int) {
-                voice.voiceRemind(FrameScore,part)
+                voice.voicePraise(FrameScore,part)
             }
             override fun onFrameScoreLow(FrameScore: Int,part:Int) {
-
+                voice.voiceRemind(FrameScore,part)
             }
         }))
         Users.add(ResJSdata())

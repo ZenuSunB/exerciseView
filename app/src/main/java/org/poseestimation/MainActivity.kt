@@ -38,7 +38,6 @@ class MainActivity :AppCompatActivity() {
     private var device = Device.GPU
     private lateinit var msquareProgress:SquareProgress
     private lateinit var videoView: VideoView
-    private lateinit var mTextToSpeech: TextToSpeech
     private lateinit var mediaController: MediaController
     private lateinit var keep1:KeepCountdownView
     private lateinit var textView: TextView
@@ -71,7 +70,6 @@ class MainActivity :AppCompatActivity() {
         }
         initView()
         msquareProgress.setCurProgress(0);
-
         keep1=findViewById(R.id.keep1)
         keep1.setCountdownListener(object: KeepCountdownView.CountdownListener {
             override fun onStart(){
@@ -85,14 +83,12 @@ class MainActivity :AppCompatActivity() {
         super.onStart()
         openCamera()
         createPoseEstimator()
-
     }
 
     private fun initView(){
         videoView = findViewById<VideoView>(R.id.videoView)
         mediaController = MediaController(this)
         videoView.setMediaController(mediaController)
-
         val mainActivity=this
         val JsonMeg="{\n" +
                 "    \"data\": [\n" +
@@ -137,18 +133,19 @@ class MainActivity :AppCompatActivity() {
                 //一轮运动完成，开始创建下一轮运动的数据结构
                 //休息阶段时关闭图像处理
                 cameraSource!!.setProcessImageFlag(false)
-                //更新came索引，使其图像处理绑定到下一轮运动的数据结构中
-                cameraSource!!.index=videoviewrepetend!!.index
                 //创建新一轮运动数据结构
                 cameraSource!!.Samples.add(Sample("sample3-10fps.processed.json",baseContext,1,samplevideoTendency,object:Sample.scorelistener{
                     override fun onFrameScoreHeight(FrameScore: Int,part:Int) {
-                        voice.voiceRemind(FrameScore,part)
+                        voice.voicePraise(FrameScore,part)
                     }
                     override fun onFrameScoreLow(FrameScore: Int,part:Int) {
-
+                        voice.voiceRemind(FrameScore,part)
                     }
                 }))
                 cameraSource!!.Users.add(ResJSdata())
+
+                //更新came索引，使其图像处理绑定到下一轮运动的数据结构中
+                cameraSource!!.index=++(videoviewrepetend!!.index)
             }
 
             override fun onExerciseStart(index:Int,samplevideoName:String) {

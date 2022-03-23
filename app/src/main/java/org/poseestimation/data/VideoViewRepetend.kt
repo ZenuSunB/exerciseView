@@ -39,14 +39,13 @@ class VideoViewRepetend(
             //倒计时完毕后开始播放运动视频
             listener?.onExerciseStart(index,"11111")//运动开始触发,进入运动视频
             // uri = "android.resource://" + context.packageName + "/" +  schedule.exerciseName.get(i++)，
-            val ExerciseDounturi = "android.resource://" + context.packageName + "/" + R.raw.sample2
+            val ExerciseDounturi = "android.resource://" + context.packageName + "/" + R.raw.sample3
             videoView.setVideoURI(Uri.parse(ExerciseDounturi));
             videoView.setOnPreparedListener { it.isLooping = false }
             videoView.start()
 
             videoView.setOnCompletionListener {
                 //运动视频结束，开始进入休息界面
-                index++
                 listener?.onExerciseEnd(index,"11111",schedule.tags[schedule.exerciseId[index]])//运动结束触发，进入休息视频
                 val Relaxingturi = "android.resource://" + context.packageName + "/" + R.raw.relaxtimer
                 videoView.setVideoURI(Uri.parse(Relaxingturi));
@@ -63,7 +62,7 @@ class VideoViewRepetend(
         val countDounturi = "android.resource://" + context.packageName + "/" + R.raw.countdown
         videoView.setVideoURI(Uri.parse(countDounturi));
         videoView.setOnPreparedListener { it.isLooping = false }
-        videoView.start();
+        videoView.start()
 
         //播放倒计时提示声音
         val fd = context.assets.openFd("voice/countdown/5countdown.mp3");
@@ -71,6 +70,9 @@ class VideoViewRepetend(
         voicePlayer.setDataSource(fd)
         voicePlayer.prepare()
         voicePlayer.start()
+        voicePlayer.setOnCompletionListener {
+            it.release()
+        }
     }
 
     interface VideoViewRepetendListener {

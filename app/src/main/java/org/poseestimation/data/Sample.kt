@@ -9,6 +9,7 @@ import org.poseestimation.utils.DTWprocess
 import org.poseestimation.utils.DataTypeTransfor
 import java.io.BufferedReader
 import java.io.InputStreamReader
+import java.util.*
 
 class Sample(
     private var name:String,
@@ -22,7 +23,11 @@ class Sample(
     var count=-1
     var totalScore=50.0
     var bodyWeight:MutableList<Double> = arrayListOf(0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0)
-        //arrayListOf(0.0,10.0/38,10.0/38,0.0,0.0,0.0,8.0/38,0.0,0.0,5.0/38,5.0/38)
+    var voiceMap:MutableList<Int> = arrayListOf(0,1,2,3,4,5,6,7,7,8,8)
+    //头部 左臂 右臂 左腿 右腿 跨部 双肩 左脖子 右脖子 躯干左侧 躯干右侧
+    //arrayListOf(0.0,10.0/38,10.0/38,0.0,0.0,0.0,8.0/38,0.0,0.0,5.0/38,5.0/38)
+    var isVoice:Boolean=true
+    var randomNum=0
     init
     {
         name?.let{sampleKeypointsList=read_json(it)}
@@ -141,6 +146,7 @@ class Sample(
         //获得Matrix结构的用户关节点数据
         val usrKeypointsList = DataTypeTransfor().listPerson2ListMatrix_Jama(usrPersonsList)
         var usrVectors = Matrix(0,0)
+
         //开始在选定的标准视频动作帧之间进行计算，选择分数最高的一帧
         for (i in begin..end - 1) {
 
@@ -180,25 +186,28 @@ class Sample(
             }
         }
 
-        if (markScore > 90) {
-            if (totalScore < 99.7) {
-                totalScore += 0.3
-            }
-        } else if (markScore > 80) {
+        if(isVoice&&(count%(50+randomNum)==0)&&count!=0) {
+            randomNum =(Math.random()*50).toInt()
+            throwForVoice(markScore)
+        }
 
-            if (totalScore < 99.9) {
+        if (markScore > 90) {
+            if (totalScore <= 99.7) {
                 totalScore += 0.15
             }
+        } else if (markScore > 80) {
+            if (totalScore <= 99.9) {
+                totalScore += 0.08
+            }
         } else if (markScore > 50) {
-            if (totalScore > 0.3) {
-                totalScore -= 0.3
+            if (totalScore >= 0.3) {
+                totalScore -= 0.5
             }
         } else {
             if (totalScore >= 0.6) {
-                totalScore -= 0.6
+                totalScore -= 0.8
             }
         }
-        listener?.onFrameScoreHeight(100,2)
         return Triple(totalScore,scoreByPart,usrVectors)
     }
 
@@ -232,9 +241,20 @@ class Sample(
     }
 
 
+    private fun throwForVoice(score:Double)
+    {
+        val temp=bodyWeight.indexOf(Collections.max(bodyWeight))
+        if(score>80)
+            listener?.onFrameScoreHeight(score.toInt(),voiceMap.get(temp))
+        else if(score<=80)
+            listener?.onFrameScoreLow(score.toInt(),voiceMap.get(temp))
+
+    }
     interface scorelistener
     {
         fun onFrameScoreHeight(FrameScore:Int,part:Int)
         fun onFrameScoreLow(FrameScore:Int,part:Int)
     }
+
+
 }

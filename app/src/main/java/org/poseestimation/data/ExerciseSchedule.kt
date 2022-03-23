@@ -11,6 +11,7 @@ class ExerciseSchedule(JSONmeg:String) {
     public var exerciseId:MutableList<Int> = arrayListOf<Int>()
     public var exerciseGroups:MutableList<Int> = arrayListOf<Int>()
     public var tags:MutableList<MutableList<Int>> = arrayListOf<MutableList<Int>>()
+
     init{
         JSON_decoder()
     }
