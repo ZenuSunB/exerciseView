@@ -48,25 +48,8 @@ class VisualizationTest {
         inputBitmap = EvaluationUtils.loadBitmapAssetByName(TEST_INPUT_IMAGE)
     }
 
-    @Test
-    fun testPosenet() {
-        val poseDetector = PoseNet.create(appContext, Device.CPU)
-        val person = poseDetector.estimatePoses(inputBitmap)[0]
-        val outputBitmap = VisualizationUtils.drawBodyKeypoints(inputBitmap, arrayListOf(person))
-        assertThat(outputBitmap).isNotNull()
-    }
 
-    @Test
-    fun testMovenetLightning() {
-        // Due to Movenet's cropping logic, we run inference several times with the same input
-        // image to improve accuracy
-        val poseDetector = MoveNet.create(appContext, Device.CPU, ModelType.Lightning)
-        poseDetector.estimatePoses(inputBitmap)
-        poseDetector.estimatePoses(inputBitmap)
-        val person2 = poseDetector.estimatePoses(inputBitmap)[0]
-        val outputBitmap2 = VisualizationUtils.drawBodyKeypoints(inputBitmap, arrayListOf(person2))
-        assertThat(outputBitmap2).isNotNull()
-    }
+
 
     @Test
     fun testMovenetThunder() {

@@ -192,19 +192,19 @@ class Sample(
         }
 
         if (markScore > 90) {
-            if (totalScore <= 99.7) {
+            if (totalScore <= 99.85) {
                 totalScore += 0.15
             }
         } else if (markScore > 80) {
-            if (totalScore <= 99.9) {
+            if (totalScore <= 99.02) {
                 totalScore += 0.08
             }
         } else if (markScore > 50) {
-            if (totalScore >= 0.3) {
+            if (totalScore >= 0.5) {
                 totalScore -= 0.5
             }
         } else {
-            if (totalScore >= 0.6) {
+            if (totalScore >= 0.8) {
                 totalScore -= 0.8
             }
         }
@@ -246,7 +246,7 @@ class Sample(
         val temp=bodyWeight.indexOf(Collections.max(bodyWeight))
         if(score>80)
             listener?.onFrameScoreHeight(score.toInt(),voiceMap.get(temp))
-        else if(score<=80)
+        else
             listener?.onFrameScoreLow(score.toInt(),voiceMap.get(temp))
 
     }

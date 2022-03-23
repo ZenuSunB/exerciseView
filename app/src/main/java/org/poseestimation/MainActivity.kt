@@ -190,7 +190,7 @@ class MainActivity :AppCompatActivity() {
                         }
                     },this.baseContext,
                         this,
-                        videoviewrepetend?.schedule!!.tags.get(videoviewrepetend!!.index),
+                        videoviewrepetend?.schedule!!.getTag(videoviewrepetend!!.index),
                         videoviewrepetend?.schedule!!.exerciseName.get(videoviewrepetend!!.index)).apply {
                         prepareCamera()
                     }

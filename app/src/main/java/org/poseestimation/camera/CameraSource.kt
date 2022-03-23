@@ -122,7 +122,7 @@ class CameraSource(
     //是否处理捕获帧
     private var isImageprocess:Boolean=false
 
-    //初始化摄像机，并设置监听器，如果有可用图像就
+    //初始化摄像机，并设置监听器
     suspend fun initCamera() {
         camera = openCamera(cameraManager, cameraId)
 

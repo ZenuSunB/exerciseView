@@ -46,7 +46,8 @@ class VideoViewRepetend(
 
             videoView.setOnCompletionListener {
                 //运动视频结束，开始进入休息界面
-                listener?.onExerciseEnd(index,"11111",schedule.tags[schedule.exerciseId[index]])//运动结束触发，进入休息视频
+                println("++++++++++++++++"+schedule.getTag(index).toString())
+                listener?.onExerciseEnd(index,"11111",schedule.getTag(index))//运动结束触发，进入休息视频
                 val Relaxingturi = "android.resource://" + context.packageName + "/" + R.raw.relaxtimer
                 videoView.setVideoURI(Uri.parse(Relaxingturi));
                 videoView.setOnPreparedListener { it.isLooping = false }
