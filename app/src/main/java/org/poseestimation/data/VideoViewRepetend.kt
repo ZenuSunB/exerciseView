@@ -14,7 +14,7 @@ import org.poseestimation.camera.CameraSource
 class VideoViewRepetend(
     private var JSONmeg:String,
     private var mainActivity: Activity,
-    private var videoView: VideoView,
+    public var videoView: VideoView,
     private var context: Context,
     private var listener: VideoViewRepetendListener?=null)
 {
@@ -39,16 +39,17 @@ class VideoViewRepetend(
             //倒计时完毕后开始播放运动视频
             listener?.onExerciseStart(index,"11111")//运动开始触发,进入运动视频
             // uri = "android.resource://" + context.packageName + "/" +  schedule.exerciseName.get(i++)，
-            val ExerciseDounturi = "android.resource://" + context.packageName + "/" + R.raw.sample3
+            val exVideoId=context.resources.getIdentifier("sample3", "raw", context.getPackageName())
+            val ExerciseDounturi = "android.resource://" + context.packageName + "/" + exVideoId
             videoView.setVideoURI(Uri.parse(ExerciseDounturi));
             videoView.setOnPreparedListener { it.isLooping = false }
             videoView.start()
 
             videoView.setOnCompletionListener {
                 //运动视频结束，开始进入休息界面
-                println("++++++++++++++++"+schedule.getTag(index).toString())
                 listener?.onExerciseEnd(index,"11111",schedule.getTag(index))//运动结束触发，进入休息视频
-                val Relaxingturi = "android.resource://" + context.packageName + "/" + R.raw.relaxtimer
+                val reVideoId=context.resources.getIdentifier("relaxtimer", "raw", context.getPackageName())
+                val Relaxingturi = "android.resource://" + context.packageName + "/" + reVideoId
                 videoView.setVideoURI(Uri.parse(Relaxingturi));
                 videoView.setOnPreparedListener { it.isLooping = false }
                 videoView.start()

@@ -136,7 +136,6 @@ class CameraSource(
         }))
         Users.add(ResJSdata())
 
-
         imageReader =
             ImageReader.newInstance(PREVIEW_WIDTH, PREVIEW_HEIGHT, ImageFormat.YUV_420_888, 3)
         imageReader?.setOnImageAvailableListener({ reader ->
@@ -167,11 +166,9 @@ class CameraSource(
         imageReader?.surface?.let { surface ->
             session = createSession(listOf(surface))
 
-            val fps: Range<Int> = Range.create(10,10)
             var cameraRequest = camera?.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
+            val fps: Range<Int> = Range.create(10,10)
             cameraRequest?.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE,fps)
-            cameraRequest?.build()
-
             cameraRequest?.addTarget(surface)
             cameraRequest?.build()?.let {
                 session?.setRepeatingRequest(it, null, null)
@@ -232,7 +229,13 @@ class CameraSource(
         }
     }
 
+    fun pause()
+    {
+//        session?.stopRepeating()
+    }
+
     fun resume() {
+
         imageReaderThread = HandlerThread("imageReaderThread").apply { start() }
         imageReaderHandler = Handler(imageReaderThread!!.looper)
         fpsTimer = Timer()
@@ -246,6 +249,16 @@ class CameraSource(
             0,
             1000
         )
+
+//        imageReader?.surface?.let { surface ->
+//            var cameraRequest = camera?.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
+//            val fps: Range<Int> = Range.create(10,10)
+//            cameraRequest?.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE,fps)
+//            cameraRequest?.addTarget(surface)
+//            cameraRequest?.build()?.let {
+//                session?.setRepeatingRequest(it, null, null)
+//            }
+//        }
     }
 
     fun close() {

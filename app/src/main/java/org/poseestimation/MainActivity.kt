@@ -3,11 +3,13 @@ package org.poseestimation
 import android.Manifest
 import android.app.AlertDialog
 import android.app.Dialog
+import android.content.DialogInterface
 import android.content.pm.PackageManager
 import android.media.MediaPlayer
 import android.os.*
 import android.speech.tts.TextToSpeech
 import android.speech.tts.Voice
+import android.view.KeyEvent
 import android.view.SurfaceView
 import android.view.WindowManager
 import android.widget.MediaController
@@ -59,12 +61,15 @@ class MainActivity :AppCompatActivity() {
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        println("++++++++++++++++++onCreate")
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         // keep screen on while app is running
-        msquareProgress = findViewById(R.id.sp);
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+
+        msquareProgress = findViewById(R.id.sp);
         surfaceView = findViewById(R.id.surfaceView)
+
         if (!isCameraPermissionGranted()) {
             requestPermission()
         }
@@ -78,17 +83,15 @@ class MainActivity :AppCompatActivity() {
             }
         })
         keep1.startCountDown()
-    }
-    override fun onStart() {
-        super.onStart()
         openCamera()
         createPoseEstimator()
     }
-
+    override fun onStart() {
+        println("++++++++++++++++++onStart")
+        super.onStart()
+    }
     private fun initView(){
         videoView = findViewById<VideoView>(R.id.videoView)
-        mediaController = MediaController(this)
-        videoView.setMediaController(mediaController)
         val mainActivity=this
         val JsonMeg="{\n" +
                 "    \"data\": [\n" +
@@ -147,21 +150,28 @@ class MainActivity :AppCompatActivity() {
                 //更新came索引，使其图像处理绑定到下一轮运动的数据结构中
                 cameraSource!!.index=++(videoviewrepetend!!.index)
             }
-
             override fun onExerciseStart(index:Int,samplevideoName:String) {
                 cameraSource!!.setProcessImageFlag(true)
             }
         })
     }
     override fun onResume() {
-      cameraSource?.resume()
+        println("++++++++++++++++++onResume")
+        cameraSource?.resume()
+        videoviewrepetend?.videoView?.start()
         super.onResume()
     }
 
     override fun onPause() {
-        cameraSource?.close()
-        cameraSource = null
+        println("++++++++++++++++++onPause")
+        cameraSource?.pause()
+        videoviewrepetend?.videoView?.pause()
         super.onPause()
+    }
+
+    override fun onStop() {
+        println("++++++++++++++++++onStop")
+        super.onStop()
     }
 
     // check if permission is granted or not.
@@ -227,6 +237,25 @@ class MainActivity :AppCompatActivity() {
         }
     }
 
+    override fun onKeyDown(keyCode:Int, event: KeyEvent?):Boolean {
+        // TODO Auto-generated method stub
+        if(keyCode==KeyEvent.KEYCODE_BACK){
+            val msg="您的本次运动记录将不会保存，确定退出码？"
+            AlertDialog.Builder(this)
+                .setMessage(msg)
+                .setTitle("注意")
+                .setPositiveButton("确认", DialogInterface.OnClickListener { dialogInterface, i ->
+                    finish()
+                })
+                .setNeutralButton("取消", null)
+                .create()
+                .show()
+            return false
+        }
+        else {
+            return false
+        }
+    }
 
     private fun showToast(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_LONG).show()

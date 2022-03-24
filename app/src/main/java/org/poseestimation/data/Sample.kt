@@ -27,7 +27,7 @@ class Sample(
     //头部 左臂 右臂 左腿 右腿 跨部 双肩 左脖子 右脖子 躯干左侧 躯干右侧
     //arrayListOf(0.0,10.0/38,10.0/38,0.0,0.0,0.0,8.0/38,0.0,0.0,5.0/38,5.0/38)
     var isVoice:Boolean=true
-    var randomNum=0
+
     init
     {
         name?.let{sampleKeypointsList=read_json(it)}
@@ -185,19 +185,17 @@ class Sample(
                 usrVectors= tempUsrVectors
             }
         }
-
-        if(isVoice&&(count%(50+randomNum)==0)&&count!=0) {
-            randomNum =(Math.random()*50).toInt()
+        if(isVoice&&(count%50==0)&&(Math.random()<=0.4)&&count!=0) {
             throwForVoice(markScore)
         }
 
         if (markScore > 90) {
             if (totalScore <= 99.85) {
-                totalScore += 0.15
+                totalScore += 0.20
             }
         } else if (markScore > 80) {
             if (totalScore <= 99.02) {
-                totalScore += 0.08
+                totalScore += 0.12
             }
         } else if (markScore > 50) {
             if (totalScore >= 0.5) {
