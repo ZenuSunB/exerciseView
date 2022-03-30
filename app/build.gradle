@@ -52,7 +52,7 @@ dependencies {
     implementation 'org.tensorflow:tensorflow-lite-gpu:2.5.0'
     implementation 'org.tensorflow:tensorflow-lite-support:0.3.0'
     implementation 'androidx.annotation:annotation:1.0.2'
-
+    implementation group: 'org.jblas', name: 'jblas', version: '1.2.4'
     implementation group: 'gov.nist.math', name: 'jama', version: '1.0.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
