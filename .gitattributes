@@ -1,0 +1,7 @@
+*.zip filter=lfs diff=lfs merge=lfs -text
+*.mp4 filter=lfs diff=lfs merge=lfs -text
+sample4.mp4 filter=lfs diff=lfs merge=lfs -text
+sample5.mp4 filter=lfs diff=lfs merge=lfs -text
+sample6.mp4 filter=lfs diff=lfs merge=lfs -text
+sample7.mp4 filter=lfs diff=lfs merge=lfs -text
+sample8.mp4 filter=lfs diff=lfs merge=lfs -text
