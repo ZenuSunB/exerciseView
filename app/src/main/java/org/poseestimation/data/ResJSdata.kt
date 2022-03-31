@@ -76,13 +76,13 @@ class ResJSdata() {
 
             //获得运动强度，size-1
             if(i!=count-1)
-                EXTresArray.put(exerciseIntensity[i])
+                EXTresArray.put((exerciseIntensity[i]*100).toInt())
 
             //获得动作分数
             var SCOline:JSONArray = JSONArray()
             for(j in 0..10)
             {
-                SCOline.put(scoreBypart[i][j])
+                SCOline.put(scoreBypart[i][j].toInt())
             }
             SCOresArray.put(SCOline)
         }
@@ -94,7 +94,7 @@ class ResJSdata() {
             path_point.put(dtwres?.DTW_PathList.get(dtwres?.DTW_PathList.count()-i).second)
             DTWpathlist.put(path_point)
         }
-        DTWscore.put(dtwres.score)
+        DTWscore.put(dtwres.score.toInt())
         DTWresobj.put("path",DTWpathlist)
         DTWresobj.put("score",DTWscore)
 
@@ -112,7 +112,7 @@ class ResJSdata() {
         var temp= toJson()
         var tempStr:String=temp.toString()
         var path=filename+".txt"
-        var fos:FileOutputStream= context.openFileOutput(path,Context.MODE_PRIVATE);
+        var fos:FileOutputStream= context.openFileOutput(path,Context.MODE_PRIVATE)
         fos.write(tempStr.toByteArray());
         fos.flush();
         fos.close();

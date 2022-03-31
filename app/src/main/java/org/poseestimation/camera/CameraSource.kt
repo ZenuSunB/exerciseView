@@ -253,15 +253,6 @@ class CameraSource(
             1000
         )
 
-//        imageReader?.surface?.let { surface ->
-//            var cameraRequest = camera?.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
-//            val fps: Range<Int> = Range.create(10,10)
-//            cameraRequest?.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE,fps)
-//            cameraRequest?.addTarget(surface)
-//            cameraRequest?.build()?.let {
-//                session?.setRepeatingRequest(it, null, null)
-//            }
-//        }
     }
 
     fun close() {
@@ -312,7 +303,7 @@ class CameraSource(
                 frameProcessedInOneSecondInterval++
                 if (frameProcessedInOneSecondInterval == 1) {
                     // send fps to view
-                    listener?.onFPSListener(framesPerSecond)
+//                    listener?.onFPSListener(framesPerSecond)
                 }
             }
             else if (isPersonDetect == false) {

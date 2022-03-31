@@ -3,35 +3,29 @@ package org.poseestimation
 import android.Manifest
 import android.app.AlertDialog
 import android.app.Dialog
+import android.app.StatusBarManager
+import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.media.MediaPlayer
 import android.os.*
 import android.provider.Settings
-import android.speech.tts.TextToSpeech
-import android.speech.tts.Voice
-import android.text.Layout
-import android.util.Log
 import android.view.*
 import android.widget.*
-import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.DialogFragment
-import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.poseestimation.*
 import org.poseestimation.camera.CameraSource
 import org.poseestimation.data.*
 import org.poseestimation.ml.ModelType
 import org.poseestimation.ml.MoveNet
-import kotlin.random.Random
-import org.poseestimation.*
+import kotlin.concurrent.thread
+
 class MainActivity :AppCompatActivity() {
     companion object {
         private const val FRAGMENT_DIALOG = "dialog"
@@ -124,7 +118,11 @@ class MainActivity :AppCompatActivity() {
                         voice.voiceRemind(FrameScore,part)
                     }
                 }))
-//                cameraSource!!.Users.get(index-1).writeTofile("test", cameraSource!!.Samples[index-1].getSampleVecList(),baseContext)
+
+                thread {
+                    cameraSource!!.Users.get(index-1).writeTofile("test", cameraSource!!.Samples[index-1].getSampleVecList(),baseContext)
+                }
+
                 //创建新的用户数据收集器
                 cameraSource!!.Users.add(ResJSdata())
 
@@ -226,6 +224,7 @@ class MainActivity :AppCompatActivity() {
             }
         }
     }
+
 
     override fun onKeyDown(keyCode:Int, event: KeyEvent?):Boolean {
         // TODO Auto-generated method stub
