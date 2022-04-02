@@ -135,11 +135,11 @@ class CameraSender(
                 session?.setRepeatingRequest(it, null, null)
             }
         }
-        createFile()
+//        createFile()
         encoder= EncoderH264(PREVIEW_WIDTH,PREVIEW_HEIGHT,object :EncoderH264.EncoderListener{
             override fun h264(data: ByteArray) {
                 Log.d("TAG",data.count().toString())
-                fos?.write(data)
+//                fos?.write(data)
             }
         })
     }
