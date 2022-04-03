@@ -9,4 +9,6 @@ public class CommunicationKey {
     public static final String RESPONSE_ECHO = "echo:";
     public static final String RESPONSE_ERROR = "error:";
     public static final String EOF = "\r";
+    public static final byte FRAMEHEAD_BEGIN = (byte)'<';
+    public static final byte FRAMEHEAD_END = (byte)'>';
 }

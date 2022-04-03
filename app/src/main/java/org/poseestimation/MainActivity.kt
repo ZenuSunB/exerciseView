@@ -124,7 +124,7 @@ class MainActivity :AppCompatActivity() {
                 }
 
                 //创建新的用户数据收集器
-                cameraSource!!.Users.add(ResJSdata())
+                cameraSource!!.Users.add(ResJSdata(index))
 
                 //更新came索引，使其图像处理绑定到下一轮运动的数据结构中
                 cameraSource!!.index++
@@ -137,7 +137,13 @@ class MainActivity :AppCompatActivity() {
                 //运动全部结束，准备退出
                 //退出前关闭图像处理
                 cameraSource!!.setProcessImageFlag(false)
-                //cameraSource!!.Users.get(index-1).writeTofile("test", cameraSource!!.Samples[index-1].getSampleVecList(),baseContext)
+                thread {
+                    cameraSource!!.Users.get(index - 1).writeTofile(
+                        "test",
+                        cameraSource!!.Samples[index - 1].getSampleVecList(),
+                        baseContext
+                    )
+                }
                 cameraSource!!.index++
             }
         })
@@ -188,8 +194,11 @@ class MainActivity :AppCompatActivity() {
                         }
                     },this.baseContext,
                         this,
-                        videoviewrepetend?.schedule!!.getTag(videoviewrepetend!!.index),
-                        videoviewrepetend?.schedule!!.exerciseName.get(videoviewrepetend!!.index)).apply {
+                        //*************************************************************
+                        ExerciseSchedule.getTag(videoviewrepetend!!.index),
+                        //*************************************************************
+                        ExerciseSchedule.exerciseName.get(videoviewrepetend!!.index)).apply {
+                        //*************************************************************
                         prepareCamera()
                     }
                 lifecycleScope.launch(Dispatchers.Main) {
@@ -259,8 +268,6 @@ class MainActivity :AppCompatActivity() {
                     // do nothing
                 }
                 .create()
-
-
 
 
         companion object {

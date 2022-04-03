@@ -9,7 +9,7 @@ import org.poseestimation.R
 import org.poseestimation.utils.DTWprocess
 import java.io.*
 
-class ResJSdata() {
+class ResJSdata(private var sampleId:Int=-1) {
 
     //用户动作骨架
     private lateinit var Vectorslist:MutableList<Matrix>
@@ -66,27 +66,42 @@ class ResJSdata() {
         var CPNresArray:JSONArray = JSONArray()//完成度的返回数据
         var EXTresArray:JSONArray = JSONArray()//运动强度的返回数据
 
-        var SCOresArray:JSONArray = JSONArray()//运动分数的返回数据
-
-
-        for(i in 0..count-1)
+        var SCOresList:JSONObject = JSONObject()//运动分数的返回数据
+        var PartMap:Map<Int,String> = mapOf(
+            0 to "头部",
+            1 to  "左臂",
+            2 to  "右臂",
+            3 to "左腿",
+            4 to "右腿",
+            5 to "跨部",
+            6 to "双肩",
+            7 to "左脖子" ,
+            8 to "右脖子",
+            9 to "躯干左侧",
+            10 to "躯干右侧")
+        for(i in 0..10)
         {
+            var SCOcol: JSONArray = JSONArray()
+            if (ExerciseSchedule.getTendency(sampleId)[i] > 0.5)
+            {
+
+                for (j in 0..count - 1)
+                {
+
+                    //获得动作分数
+                    SCOcol.put(scoreBypart[j][i].toInt())
+                }
+            }
+            SCOresList.put(PartMap.get(i), SCOcol)
+        }
+
+        for(i in 0..count-1) {
             //获得完成度
             CPNresArray.put(completeness[i])
-
             //获得运动强度，size-1
             if(i!=count-1)
                 EXTresArray.put((exerciseIntensity[i]*100).toInt())
-
-            //获得动作分数
-            var SCOline:JSONArray = JSONArray()
-            for(j in 0..10)
-            {
-                SCOline.put(scoreBypart[i][j].toInt())
-            }
-            SCOresArray.put(SCOline)
         }
-
         for(i in 1..dtwres?.DTW_PathList.count())
         {
             var path_point:JSONArray = JSONArray()
@@ -98,7 +113,7 @@ class ResJSdata() {
         DTWresobj.put("path",DTWpathlist)
         DTWresobj.put("score",DTWscore)
 
-        ALLresobj.put("scorebypart",SCOresArray)
+        ALLresobj.put("scorebypart",SCOresList)
         ALLresobj.put("completeness",CPNresArray)
         ALLresobj.put("exerciseIntensity",EXTresArray)
         ALLresobj.put("DTW",DTWresobj)

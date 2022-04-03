@@ -54,11 +54,10 @@ public class FrameDataSender {
             Socket socket = new Socket();
             try {
                 socket.connect(new InetSocketAddress(frameData.getDestIp(), RemoteConst.FRAME_RECEIVE_PORT));
-                Log.d("frameDataSender", frameData.getDestIp()+RemoteConst.FRAME_RECEIVE_PORT);
                 DataOutputStream os = new DataOutputStream(socket.getOutputStream());
                 //发送命令内容
                 os.write(frameData.getContent());
-                os.write(CommunicationKey.EOF.getBytes());
+//                os.write(CommunicationKey.EOF.getBytes());
             } catch (IOException e) {
                 e.printStackTrace();
             } finally {

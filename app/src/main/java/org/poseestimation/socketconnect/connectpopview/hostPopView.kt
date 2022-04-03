@@ -18,7 +18,24 @@ class hostPopView :PopupWindow () {
     lateinit var view:View
     lateinit var btnSearchDeviceOpen : Button
     lateinit var slaveList:ListView
-    public var devices: ArrayList<Device> = arrayListOf()
+    companion object {
+         var devices: ArrayList<Device> = arrayListOf()
+         fun sendCommand(device: Device) {
+            //发送命令
+            val command = Command("openCamera".toByteArray(), object : Command.Callback {
+                override fun onEcho(msg: String?) {
+                }
+                override fun onError(msg: String?) {
+                }
+                override fun onRequest(msg: String?) {
+                }
+                override fun onSuccess(msg: String?) {
+                }
+            })
+            command.setDestIp(device.ip)
+            CommandSender.addCommand(command)
+        }
+    }
     public fun CreateRegisterPopWindow(mContext:FragmentActivity,handlerOnClick:View.OnClickListener)
     {
         this.mContext=mContext
@@ -101,20 +118,5 @@ class hostPopView :PopupWindow () {
             arrayListOf()))
         devices.clear()
     }
-    private fun sendCommand(device: Device) {
-        //发送命令
 
-        val command = Command("openCamera".toByteArray(), object : Command.Callback {
-            override fun onEcho(msg: String?) {
-            }
-            override fun onError(msg: String?) {
-            }
-            override fun onRequest(msg: String?) {
-            }
-            override fun onSuccess(msg: String?) {
-            }
-        })
-        command.setDestIp(device.ip)
-        CommandSender.addCommand(command)
-    }
 }

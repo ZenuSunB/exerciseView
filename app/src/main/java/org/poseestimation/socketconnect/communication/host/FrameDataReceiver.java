@@ -1,9 +1,11 @@
 package org.poseestimation.socketconnect.communication.host;
 
+import android.media.Image;
 import android.util.Log;
 
 import org.poseestimation.socketconnect.RemoteConst;
 import org.poseestimation.socketconnect.communication.CommunicationKey;
+import org.poseestimation.videodecoder.DecoderH264;
 
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -18,7 +20,7 @@ import java.util.concurrent.TimeUnit;
 
 public class FrameDataReceiver {
 
-    private static ThreadPoolExecutor threadPool = new ThreadPoolExecutor(7, 8, 60, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), new ReceiveFrameDataThreadFactory(), new RejectedExecutionHandler() {
+    private static ThreadPoolExecutor threadPool = new ThreadPoolExecutor(31, 32, 60, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), new ReceiveFrameDataThreadFactory(), new RejectedExecutionHandler() {
         @Override
         public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
             throw new RejectedExecutionException();
@@ -53,29 +55,59 @@ public class FrameDataReceiver {
 
     public static class FrameDataParseRunnable implements Runnable{
         Socket socket;
-
-        public FrameDataParseRunnable(Socket socket){
-            this.socket = socket;
-        }
+        public FrameDataParseRunnable(Socket socket) {this.socket = socket;}
 
         @Override
         public void run() {
             try {
                 DataInputStream is = new DataInputStream(socket.getInputStream());
-                byte[] bytes = new byte[1024*8];
-                int i=0;
-                while(true){
-                    bytes[i] = (byte) is.read();
-                    if (bytes[i] == -1) {
+                byte[] bytes = new byte[1024*64];
+                int FrameLength= 0;
+                int type=0;
+                //0还没开始读，1读到了<,2读到了<<,3读到了<<<,4读到了<<<<,
+                //5读到了<<<<<,6读到了<<<<<<,7读到了<<<<<<<,8读到了<<<<<<<<
+                //9读到了<<<<<<<<****>,
+                int FrameLengthOffSet=0;
+                while(true)
+                {
+                    byte b = (byte) is.read();
+                    if (b == -1) {
                         break;
                     }
-                    if((char)bytes[i] != CommunicationKey.EOF.charAt(0)){
-                        i++;
-                    }else{
-                        String data = new String(bytes, 0, i+1, Charset.defaultCharset()).replace(CommunicationKey.EOF, "");
-                        if(listener!=null){
-                            listener.onReceive(data);
+                    if((char)b==CommunicationKey.FRAMEHEAD_BEGIN)
+                    {
+                        assert type<=8;
+                        type+=1;
+                        if(type==8)
+                        {
+                            while(FrameLengthOffSet<4)
+                            {
+                                b = (byte) is.read();
+                                FrameLength |=
+                                        (b << FrameLengthOffSet * 8) & (0xFF << FrameLengthOffSet * 8);
+                                FrameLengthOffSet++;
+                            }
+                            assert FrameLengthOffSet==4;
+                            int readFrameLength=0;
+                            int remainFrameLength=FrameLength;
+                            while(remainFrameLength>0) {
+                                int newReaded=is.read(bytes, readFrameLength, remainFrameLength);
+                                readFrameLength+=newReaded;
+                                remainFrameLength-=newReaded;
+                            }
+                            if(listener!=null){
+                                listener.onReceive(bytes);
+                            }
+                            FrameLength=0;
+                            FrameLengthOffSet=0;
+                            type=0;
                         }
+                        continue;
+                    }
+                    else
+                    {
+                        type=0;
+                        continue;
                     }
                 }
             }catch (Exception e){
@@ -93,6 +125,6 @@ public class FrameDataReceiver {
     }
 
     public interface FrameDataListener{
-        void onReceive(String data);
+        void onReceive(byte[] data);
     }
 }

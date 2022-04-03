@@ -40,6 +40,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import org.poseestimation.*
 import kotlin.coroutines.resumeWithException
 import org.poseestimation.data.Person
+import org.poseestimation.socketconnect.connectpopview.slavePopView
 import org.poseestimation.videodecoder.EncoderH264
 import java.io.File
 import java.io.FileOutputStream
@@ -94,7 +95,6 @@ class CameraSender(
     private lateinit var encoder: EncoderH264
 
     //初始化摄像机，并设置监听器
-
     suspend fun initCamera() {
         camera = openCamera(cameraManager, cameraId)
         imageReader =
@@ -128,18 +128,17 @@ class CameraSender(
         imageReader?.surface?.let { surface ->
             session = createSession(listOf(surface))
             var cameraRequest = camera?.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
-            val fps: Range<Int> = Range.create(10,10)
-            cameraRequest?.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE,fps)
             cameraRequest?.addTarget(surface)
             cameraRequest?.build()?.let {
                 session?.setRepeatingRequest(it, null, null)
             }
         }
-//        createFile()
         encoder= EncoderH264(PREVIEW_WIDTH,PREVIEW_HEIGHT,object :EncoderH264.EncoderListener{
             override fun h264(data: ByteArray) {
                 Log.d("TAG",data.count().toString())
-//                fos?.write(data)
+                    slavePopView.hostDevice?.let {
+                        slavePopView.sendFrameData(data,it)
+                    }
             }
         })
     }
@@ -227,6 +226,7 @@ class CameraSender(
     private fun processImage(bitmap: Bitmap,image:Image) {
         synchronized(lock) {
                 encoder.encoderH264(image)
+
                 frameProcessedInOneSecondInterval++
                 if (frameProcessedInOneSecondInterval == 1) {
                     // send fps to view
@@ -284,11 +284,11 @@ class CameraSender(
     interface CameraSenderListener {
 
     }
-    private var fos:FileOutputStream?=null
-    private fun createFile()
-    {
-        fos = context.openFileOutput("test.h264",Context.MODE_PRIVATE)
-    }
+//    private var fos:FileOutputStream?=null
+//    private fun createFile()
+//    {
+//        fos = context.openFileOutput("test.h264",Context.MODE_PRIVATE)
+//    }
 
     private fun showToast(message: String)
     {

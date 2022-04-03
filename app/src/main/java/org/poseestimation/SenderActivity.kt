@@ -22,6 +22,7 @@ import org.poseestimation.camera.CameraSender
 import org.poseestimation.socketconnect.Device
 import org.poseestimation.socketconnect.communication.CommunicationKey
 import org.poseestimation.socketconnect.communication.slave.CommandReceiver
+import org.poseestimation.socketconnect.connectpopview.hostPopView
 import org.poseestimation.socketconnect.connectpopview.slavePopView
 import org.poseestimation.socketconnect.search.DeviceSearchResponser
 import org.poseestimation.socketconnect.search.DeviceSearcher
@@ -32,9 +33,8 @@ class SenderActivity :AppCompatActivity() {
     }
     /** A [SurfaceView] for camera preview.   */
     private lateinit var surfaceView: SurfaceView
-
+    private lateinit var slavepopView: slavePopView
     private var cameraSender: CameraSender? = null
-    private var hostDevice:Device?=null
     private var isResponseOpen:Boolean=false
     private val requestPermissionLauncher =
         registerForActivityResult(
@@ -62,7 +62,7 @@ class SenderActivity :AppCompatActivity() {
 
         findViewById<CoordinatorLayout>(R.id.main_layout).post{
             //创建popview进行局域网应答
-            val slavepopView=slavePopView(this)
+            slavepopView=slavePopView(this)
             slavepopView.CreateRegisterPopWindow(this,View.OnClickListener {
                 if(isResponseOpen)
                 {
@@ -107,6 +107,11 @@ class SenderActivity :AppCompatActivity() {
     override fun onPause() {
         cameraSender?.pause()
         super.onPause()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        slavepopView.dismiss()
     }
 
 

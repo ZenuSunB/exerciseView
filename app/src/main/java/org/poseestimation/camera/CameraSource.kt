@@ -135,9 +135,7 @@ class CameraSource(
                 voice.voiceRemind(FrameScore,part)
             }
         }))
-
-
-        Users.add(ResJSdata())
+        Users.add(ResJSdata(0))
 
         imageReader =
             ImageReader.newInstance(PREVIEW_WIDTH, PREVIEW_HEIGHT, ImageFormat.YUV_420_888, 3)

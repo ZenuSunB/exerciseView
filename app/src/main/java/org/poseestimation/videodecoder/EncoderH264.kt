@@ -41,7 +41,8 @@ class EncoderH264(
     public fun encoderH264(image: Image) {
         var nv21=getDataFromImage(image,COLOR_FormatNV21)
         var bytes = NV21ToNv12(nv21, width, height)
-        var nv12 = rotateNV2by90(bytes, width, height)
+////        var nv12 = rotateNV2by90(bytes, width, height)
+//        var nv12=nv21
         //拿到输入缓冲区,用于传送数据进行编码
         var inputBuffers = mediaCodec.inputBuffers
         //拿到输出缓冲区,用于取到编码后的数据
@@ -52,12 +53,12 @@ class EncoderH264(
             var inputBuffer = inputBuffers[inputBufferIndex]
             inputBuffer.clear()
             //往输入缓冲区写入数据
-            inputBuffer.put(nv12)
+            inputBuffer.put(nv21)
             //五个参数，第一个是输入缓冲区的索引，第二个数据是输入缓冲区起始索引，第三个是放入的数据大小，第四个是时间戳，保证递增就是
             mediaCodec.queueInputBuffer(
                 inputBufferIndex,
                 0,
-                nv12.count(),
+                nv21.count(),
                 System.nanoTime() / 1000,
                 0
             )
@@ -131,6 +132,7 @@ class EncoderH264(
         }
         return false
     }
+
     private fun getDataFromImage(image:Image, colorFormat:Int):ByteArray
     {
         if (colorFormat != COLOR_FormatI420 && colorFormat != COLOR_FormatNV21) {

@@ -24,7 +24,24 @@ class slavePopView(private val activity: Activity?=null) :PopupWindow () {
     lateinit var view:View
     lateinit var btnResponseOpen : Button
     lateinit var hostList:ListView
-    public var hostDevice: Device? = null
+    companion object {
+         var hostDevice: Device? = null
+         fun sendFrameData(frameData:ByteArray,device: Device) {
+            //发送命令
+            val frameData = FrameData(frameData, object : FrameData.Callback {
+                override fun onEcho(msg: String?) {
+                }
+                override fun onError(msg: String?) {
+                }
+                override fun onRequest(msg: String?) {
+                }
+                override fun onSuccess(msg: String?) {
+                }
+            })
+            frameData.setDestIp(device.ip)
+            FrameDataSender.addFrameData(frameData)
+        }
+    }
     public fun CreateRegisterPopWindow(mContext:FragmentActivity,handlerOnClick:View.OnClickListener)
     {
         this.mContext=mContext
@@ -33,7 +50,7 @@ class slavePopView(private val activity: Activity?=null) :PopupWindow () {
         hostList=view.findViewById(R.id.hostlist)
         hostList.setOnItemClickListener(object :AdapterView.OnItemClickListener {
             override fun onItemClick(p0: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                hostDevice?.let{sendFrameData(it)}
+//                hostDevice?.let{sendFrameData(null,it)}
             }
         })
         btnResponseOpen.setOnClickListener(handlerOnClick)
@@ -89,20 +106,6 @@ class slavePopView(private val activity: Activity?=null) :PopupWindow () {
         DeviceSearchResponser.close()
 
     }
-    private fun sendFrameData(device: Device) {
-        //发送命令
-        val frameData = FrameData("t".toByteArray(), object : FrameData.Callback {
-            override fun onEcho(msg: String?) {
-            }
-            override fun onError(msg: String?) {
-            }
-            override fun onRequest(msg: String?) {
-            }
-            override fun onSuccess(msg: String?) {
-            }
-        })
-        frameData.setDestIp(device.ip)
-        FrameDataSender.addFrameData(frameData)
-    }
+
 
 }

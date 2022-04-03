@@ -59,20 +59,20 @@ class VideoViewRepetend(
             //隐藏倒计时VIEW
             countDownHide()
             //运动开始触发,进入运动视频
-            listener?.onExerciseStart(index,schedule.getName(index))
+            listener?.onExerciseStart(index,ExerciseSchedule.getName(index))
             //播放运动视频
             videoView.start()
             //设置运动视频完成的handler
             videoView?.setOnCompletionListener {
                 //运动视频结束，开始进入休息界面
                 index++
-                if(index<schedule.getSize()) //判断是否播放完毕
+                if(index<ExerciseSchedule.getSize()) //判断是否播放完毕
                 {
                     //尚未播放完毕，转入休息界面，并更新参数以播放下一种运动视频
                     listener?.onExerciseEnd(
                         index,
-                        schedule.getName(index),
-                        schedule.getTag(index)
+                        ExerciseSchedule.getName(index),
+                        ExerciseSchedule.getTag(index)
                     )
                     //运动结束触发，进入休息视频
                     val reVideoId = context.resources.getIdentifier("relaxtimer","raw", context.getPackageName() )
@@ -151,7 +151,7 @@ class VideoViewRepetend(
     }
     private fun setVideoView()
     {
-        val exVideoId=context.resources.getIdentifier(schedule.getName(index), "raw", context.getPackageName())
+        val exVideoId=context.resources.getIdentifier(ExerciseSchedule.getName(index), "raw", context.getPackageName())
         val ExerciseDounturi = "android.resource://" + context.packageName + "/" + exVideoId
         videoView.setVideoURI(Uri.parse(ExerciseDounturi))
         videoView.seekTo(1)
