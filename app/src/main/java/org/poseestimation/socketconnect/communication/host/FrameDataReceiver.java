@@ -3,6 +3,9 @@ package org.poseestimation.socketconnect.communication.host;
 import android.media.Image;
 import android.util.Log;
 
+import androidx.annotation.Nullable;
+
+import org.poseestimation.camera.CameraReceiver;
 import org.poseestimation.socketconnect.RemoteConst;
 import org.poseestimation.socketconnect.communication.CommunicationKey;
 import org.poseestimation.videodecoder.DecoderH264;
@@ -20,19 +23,31 @@ import java.util.concurrent.TimeUnit;
 
 public class FrameDataReceiver {
 
-    private static ThreadPoolExecutor threadPool = new ThreadPoolExecutor(61, 62, 60, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), new ReceiveFrameDataThreadFactory(), new RejectedExecutionHandler() {
+    private static ThreadPoolExecutor threadPool = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60,
+            TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), new ReceiveFrameDataThreadFactory(), new RejectedExecutionHandler() {
         @Override
         public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
             throw new RejectedExecutionException();
         }
     });
     private static FrameDataReceiver.FrameDataListener listener;
+    private static DecoderH264 decoder;
     private static volatile boolean isOpen;
 
 
     public static void open(FrameDataReceiver.FrameDataListener frameDataListener){
         listener = frameDataListener;
         isOpen = true;
+        decoder=new DecoderH264(CameraReceiver.PREVIEW_WIDTH, CameraReceiver.PREVIEW_HEIGHT,
+                new DecoderH264.DecoderListener() {
+            @Override
+            public void YUV420(@Nullable Image image) {
+                if(listener!=null)
+                {
+                    listener.onReceive(image);
+                }
+            }
+        });
         threadPool.execute(new Runnable() {
             @Override
             public void run() {
@@ -56,7 +71,7 @@ public class FrameDataReceiver {
     public static class FrameDataParseRunnable implements Runnable{
         Socket socket;
         public FrameDataParseRunnable(Socket socket) {this.socket = socket;}
-        byte[] bytes = new byte[1024*128];
+        byte[] bytes = new byte[1024*256];
         @Override
         public void run() {
             try {
@@ -94,8 +109,11 @@ public class FrameDataReceiver {
                                 readFrameLength+=newReaded;
                                 remainFrameLength-=newReaded;
                             }
-                            if(listener!=null){
-                                listener.onReceive(bytes);
+                            if(decoder!=null){
+                                Log.d("TTTTTT", "readData: "+FrameLength);
+                                byte[] resData=new byte[FrameLength];
+                                System.arraycopy(bytes,0,resData,0,FrameLength);
+                                decoder.decoderH264(resData);
                             }
                             FrameLength=0;
                             FrameLengthOffSet=0;
@@ -124,6 +142,6 @@ public class FrameDataReceiver {
     }
 
     public interface FrameDataListener{
-        void onReceive(byte[] data);
+        void onReceive(Image image);
     }
 }

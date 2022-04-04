@@ -18,6 +18,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.DialogFragment
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.poseestimation.camera.CameraReceiver
 import org.poseestimation.data.ExerciseSchedule
 import org.poseestimation.data.ResJSdata
@@ -63,12 +66,12 @@ class ReceiverActivity: AppCompatActivity() {
         setContentView(R.layout.activity_receiver)
         // keep screen on while app is running
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-
         msquareProgress = findViewById(R.id.sp);
         countdownView= findViewById(R.id.countDownView)
         surfaceView = findViewById(R.id.surfaceView)
         videoView = findViewById(R.id.videoView)
         countdownViewFramLayout=findViewById(R.id.countDownViewLayout)
+
         findViewById<CoordinatorLayout>(R.id.main_layout).post {
             //创建popview进行局域网搜索
             hostpopView = hostPopView()
@@ -194,11 +197,7 @@ class ReceiverActivity: AppCompatActivity() {
 
     // check if permission is granted or not.
     private fun isCameraPermissionGranted(): Boolean {
-        return checkPermission(
-            Manifest.permission.CAMERA,
-            Process.myPid(),
-            Process.myUid()
-        ) == PackageManager.PERMISSION_GRANTED
+        return true
     }
 
 
@@ -230,7 +229,9 @@ class ReceiverActivity: AppCompatActivity() {
                         //*************************************************************
                         prepareCamera()
                     }
+                lifecycleScope.launch(Dispatchers.Main) {
                     cameraReceiver?.initCamera()
+                }
             }
         }
     }

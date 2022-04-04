@@ -96,6 +96,7 @@ class CameraSender(
 
     //初始化摄像机，并设置监听器
     suspend fun initCamera() {
+//        createFile()
         camera = openCamera(cameraManager, cameraId)
 
         imageReader =
@@ -129,8 +130,8 @@ class CameraSender(
         imageReader?.surface?.let { surface ->
             session = createSession(listOf(surface))
             var cameraRequest = camera?.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
-            val fps: Range<Int> = Range.create(20,20)
-            cameraRequest?.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE,fps)
+//            val fps: Range<Int> = Range.create(30,30)
+//            cameraRequest?.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE,fps)
             cameraRequest?.addTarget(surface)
             cameraRequest?.build()?.let {
                 session?.setRepeatingRequest(it, null, null)
@@ -140,6 +141,7 @@ class CameraSender(
             override fun h264(data: ByteArray) {
                 Log.d("TAG",data.count().toString())
                     slavePopView.hostDevice?.let {
+//                        fos?.write(data)
                         slavePopView.sendFrameData(data,it)
                     }
             }

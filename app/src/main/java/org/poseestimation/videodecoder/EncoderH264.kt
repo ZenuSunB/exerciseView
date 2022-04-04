@@ -13,7 +13,7 @@ class EncoderH264(
         private var height:Int,
         private var listener: EncoderListener? = null)
 {
-    private var frameRate:Int=20
+    private var frameRate:Int=30
     private lateinit var mediaCodec: MediaCodec
     private val COLOR_FormatI420 = 1
     private val COLOR_FormatNV21 = 2
@@ -25,23 +25,24 @@ class EncoderH264(
         mediaCodec = MediaCodec.createEncoderByType("video/avc")
         //height和width一般都是照相机的height和width。
         //因为获取到的视频帧数据是逆时针旋转了90度的，所以这里宽高需要对调
-        var mediaFormat = MediaFormat.createVideoFormat("video/avc", height, width)
+        var mediaFormat = MediaFormat.createVideoFormat("video/avc", width, height)
         //描述平均位速率（以位/秒为单位）的键。 关联的值是一个整数
-        mediaFormat.setInteger(MediaFormat.KEY_BIT_RATE, width * height * 5)
+        mediaFormat.setInteger(MediaFormat.KEY_BIT_RATE, width * height* 5)
         //描述视频格式的帧速率（以帧/秒为单位）的键。帧率，一般在15至30之内，太小容易造成视频卡顿。
         mediaFormat.setInteger(MediaFormat.KEY_FRAME_RATE, frameRate)
+//        mediaFormat.setInteger(MediaFormat.KEY_BITRATE_MODE,MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_CBR_FD)
         //色彩格式，具体查看相关API，不同设备支持的色彩格式不尽相同
-        mediaFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible  )
+        mediaFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar   )
         //关键帧间隔时间，单位是秒
         mediaFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1);
+
         mediaCodec.configure(mediaFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
         //开始编码
         mediaCodec.start()
     }
     public fun encoderH264(image: Image) {
-        var I420=getDataFromImage(image,COLOR_FormatI420)
-//        var nv12 = NV21ToNv12(nv21, width, height)
-//      var nv12 = rotateNV2by90(bytes, width, height)
+        var nv21=getDataFromImage(image,COLOR_FormatNV21)
+        var nv12 = NV21ToNv12(nv21, width, height)
         //拿到输入缓冲区,用于传送数据进行编码
         var inputBuffers = mediaCodec.inputBuffers
         //拿到输出缓冲区,用于取到编码后的数据
@@ -52,25 +53,25 @@ class EncoderH264(
             var inputBuffer = inputBuffers[inputBufferIndex]
             inputBuffer.clear()
             //往输入缓冲区写入数据
-            inputBuffer.put(I420)
+            inputBuffer.put(nv12)
             //五个参数，第一个是输入缓冲区的索引，第二个数据是输入缓冲区起始索引，第三个是放入的数据大小，第四个是时间戳，保证递增就是
             mediaCodec.queueInputBuffer(
                 inputBufferIndex,
                 0,
-                I420.count(),
+                nv12.count(),
                 System.nanoTime() ,
                 0
             )
         }
 
         val bufferInfo = MediaCodec.BufferInfo()
+        var outData:ByteArray= byteArrayOf()
         //拿到输出缓冲区的索引
         var outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, 0)
         while (outputBufferIndex >= 0) {
             var outputBuffer = outputBuffers[outputBufferIndex]
             var outData = ByteArray(bufferInfo.size)
             outputBuffer.get(outData);
-
             //outData就是输出的h264数据
             listener?.h264(outData)
             mediaCodec.releaseOutputBuffer(outputBufferIndex, false);

@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit;
 
 public class FrameDataSender {
     private static ThreadPoolExecutor threadPool =
-            new ThreadPoolExecutor(10, 10, 1,
+            new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60,
                     TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), new SendFrameDataThreadFactory(),
                     new RejectedExecutionHandler() {
                         @Override

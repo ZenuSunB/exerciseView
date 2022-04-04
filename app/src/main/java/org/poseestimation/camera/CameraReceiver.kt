@@ -39,6 +39,7 @@ import org.poseestimation.utils.Voice
 import org.poseestimation.videodecoder.DecoderH264
 import org.poseestimation.videodecoder.EncoderH264
 import org.poseestimation.videodecoder.NV21ToBitmap
+import java.io.FileOutputStream
 
 import java.util.*
 import kotlin.jvm.internal.Ref
@@ -55,8 +56,8 @@ class CameraReceiver(
 ) {
 
     companion object {
-        private const val PREVIEW_WIDTH = 640
-        private const val PREVIEW_HEIGHT = 480
+        public const val PREVIEW_WIDTH = 640
+        public const val PREVIEW_HEIGHT = 480
         /** Threshold for confidence score. */
         public const val MIN_CONFIDENCE = .2f
         private const val TAG = "Camera Receiver"
@@ -66,10 +67,9 @@ class CameraReceiver(
     private var detector: PoseDetector? = null
     private var isTrackerEnabled = false
     private var yuvConverter: YuvToRgbConverter = YuvToRgbConverter(surfaceView.context)
-    private var yuvConverter2: org.poseestimation.videodecoder.YuvToRgbConverter = org.poseestimation.videodecoder.YuvToRgbConverter(surfaceView.context)
     private lateinit var imageBitmap: Bitmap
     /**decoder*/
-    private lateinit var decoder: DecoderH264
+//    private lateinit var decoder: DecoderH264
     private var H264FrameData:ByteArray=ByteArray(0)
     @Synchronized
     private fun visitH264FrameData(bytes:ByteArray,type:Int):ByteArray
@@ -113,8 +113,8 @@ class CameraReceiver(
     },0,100)
 
     //初始化摄像机，并设置监听器
-     public fun initCamera() {
-
+     suspend fun initCamera() {
+//        createFile()
         Samples.add(Sample(firstSamplevideoName+".processed.json",context,1,firstSamplevideoTendency,object:Sample.scorelistener{
             override fun onFrameScoreHeight(FrameScore: Int,part:Int) {
                 voice.voicePraise(FrameScore,part)
@@ -124,44 +124,32 @@ class CameraReceiver(
             }
         }))
         Users.add(ResJSdata(0))
-        surfaceView.holder.addCallback(object :SurfaceHolder.Callback{
-            override fun surfaceChanged(p0: SurfaceHolder, p1: Int, p2: Int, p3: Int) {
-
-            }
-            override fun surfaceCreated(p0: SurfaceHolder) {
-                decoder= DecoderH264(p0.surface,CameraReceiver.PREVIEW_WIDTH, CameraReceiver.PREVIEW_HEIGHT,
-                    object :DecoderH264.DecoderListener{
-                        override fun YUV420(image: Image?) {
-                            if (image != null) {
-                                if (!::imageBitmap.isInitialized) {
-                                    imageBitmap =
-                                        Bitmap.createBitmap(
-                                            CameraReceiver.PREVIEW_WIDTH,
-                                            CameraReceiver.PREVIEW_HEIGHT,
-                                            Bitmap.Config.ARGB_8888
-                                        )
-                                }
-//                    yuvConverter2.yuvToRgb(image,imageBitmap)
-                                yuvConverter.yuvToRgb(image, imageBitmap)
-                                val rotateMatrix = Matrix()
-                                rotateMatrix.postScale(1.0f, -1.0f);
-                                rotateMatrix.postRotate(180.0f)
-
-                                val rotatedBitmap = Bitmap.createBitmap(
-                                    imageBitmap, 0, 0, CameraReceiver.PREVIEW_WIDTH, CameraReceiver.PREVIEW_HEIGHT,
-                                    rotateMatrix, false
-                                )
-                                processImage(rotatedBitmap)
-                                image.close()
-                            }
-                        }
-                    })
-            }
-
-            override fun surfaceDestroyed(p0: SurfaceHolder) {
-
-            }
-        })
+//        decoder= DecoderH264(CameraReceiver.PREVIEW_WIDTH, CameraReceiver.PREVIEW_HEIGHT,
+//            object :DecoderH264.DecoderListener{
+//                override fun YUV420(image: Image?) {
+//                    if (image != null) {
+//                        if (!::imageBitmap.isInitialized) {
+//                            imageBitmap =
+//                                Bitmap.createBitmap(
+//                                    CameraReceiver.PREVIEW_WIDTH,
+//                                    CameraReceiver.PREVIEW_HEIGHT,
+//                                    Bitmap.Config.ARGB_8888
+//                                )
+//                        }
+////                    yuvConverter2.yuvToRgb(image,imageBitmap)
+//                        yuvConverter.yuvToRgb(image, imageBitmap)
+//                        val rotateMatrix = Matrix()
+//                        rotateMatrix.postScale(1.0f, -1.0f);
+//                        rotateMatrix.postRotate(180.0f)
+//                        val rotatedBitmap = Bitmap.createBitmap(
+//                            imageBitmap, 0, 0, CameraReceiver.PREVIEW_WIDTH, CameraReceiver.PREVIEW_HEIGHT,
+//                            rotateMatrix, false
+//                        )
+//                        processImage(rotatedBitmap)
+//                        image.close()
+//                    }
+//                }
+//            })
 
 
     }
@@ -272,11 +260,35 @@ class CameraReceiver(
 
     fun prepareCamera() {
         //开始接受frame
-        FrameDataReceiver.open(object : FrameDataReceiver.FrameDataListener{
-            override fun onReceive(data: ByteArray?) {
-                data?.let{
+        FrameDataReceiver.open(object : FrameDataReceiver.FrameDataListener {
+            override fun onReceive(image: Image) {
 //                    visitH264FrameData(it,1)
-                    decoder.decoderH264(data)
+//                    fos?.write(data)
+//                    decoder.decoderH264(data)
+                if (image != null) {
+                    if (!::imageBitmap.isInitialized) {
+                        imageBitmap =
+                            Bitmap.createBitmap(
+                                CameraReceiver.PREVIEW_WIDTH,
+                                CameraReceiver.PREVIEW_HEIGHT,
+                                Bitmap.Config.ARGB_8888
+                            )
+                    }
+                    yuvConverter.yuvToRgb(image, imageBitmap)
+                    val rotateMatrix = Matrix()
+                    rotateMatrix.postScale(1.0f, -1.0f);
+                    rotateMatrix.postRotate(180.0f)
+                    val rotatedBitmap = Bitmap.createBitmap(
+                        imageBitmap,
+                        0,
+                        0,
+                        CameraReceiver.PREVIEW_WIDTH,
+                        CameraReceiver.PREVIEW_HEIGHT,
+                        rotateMatrix,
+                        false
+                    )
+                    processImage(rotatedBitmap)
+                    image.close()
                 }
             }
         })
@@ -289,7 +301,11 @@ class CameraReceiver(
         fun onDetectedInfo(personScore: Float?, poseLabels: List<Pair<String, Float>>?)
         fun onPersonDetected()
     }
-
+//    private var fos:FileOutputStream?=null
+//    private fun createFile()
+//    {
+//        fos = context.openFileOutput("test.h264",Context.MODE_PRIVATE)
+//    }
     private fun showToast(message: String)
     {
         Toast.makeText(context, message, Toast.LENGTH_LONG).show()
