@@ -57,7 +57,6 @@ public class FrameDataSender {
                 DataOutputStream os = new DataOutputStream(socket.getOutputStream());
                 //发送命令内容
                 os.write(frameData.getContent());
-//                os.write(CommunicationKey.EOF.getBytes());
             } catch (IOException e) {
                 e.printStackTrace();
             } finally {

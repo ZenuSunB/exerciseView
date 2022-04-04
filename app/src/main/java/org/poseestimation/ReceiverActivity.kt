@@ -72,7 +72,6 @@ class ReceiverActivity: AppCompatActivity() {
         findViewById<CoordinatorLayout>(R.id.main_layout).post {
             //创建popview进行局域网搜索
             hostpopView = hostPopView()
-
             hostpopView.CreateRegisterPopWindow(this, View.OnClickListener {
                 if (isSearchDeviceOpen) {
                     //设备搜索已关闭

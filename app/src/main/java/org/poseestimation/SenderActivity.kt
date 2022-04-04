@@ -73,6 +73,8 @@ class SenderActivity :AppCompatActivity() {
                     //停止接受通信命令
                     CommandReceiver.close()
                     Toast.makeText(this, "已经关闭响应", Toast.LENGTH_SHORT).show()
+                    cameraSender?.close()
+                    cameraSender=null
                 }
                 else{
                     //开始响应搜索

@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit;
 
 public class FrameDataReceiver {
 
-    private static ThreadPoolExecutor threadPool = new ThreadPoolExecutor(31, 32, 60, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), new ReceiveFrameDataThreadFactory(), new RejectedExecutionHandler() {
+    private static ThreadPoolExecutor threadPool = new ThreadPoolExecutor(61, 62, 60, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), new ReceiveFrameDataThreadFactory(), new RejectedExecutionHandler() {
         @Override
         public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
             throw new RejectedExecutionException();
@@ -56,12 +56,11 @@ public class FrameDataReceiver {
     public static class FrameDataParseRunnable implements Runnable{
         Socket socket;
         public FrameDataParseRunnable(Socket socket) {this.socket = socket;}
-
+        byte[] bytes = new byte[1024*128];
         @Override
         public void run() {
             try {
                 DataInputStream is = new DataInputStream(socket.getInputStream());
-                byte[] bytes = new byte[1024*64];
                 int FrameLength= 0;
                 int type=0;
                 //0还没开始读，1读到了<,2读到了<<,3读到了<<<,4读到了<<<<,

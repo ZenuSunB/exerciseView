@@ -97,6 +97,7 @@ class CameraSender(
     //初始化摄像机，并设置监听器
     suspend fun initCamera() {
         camera = openCamera(cameraManager, cameraId)
+
         imageReader =
             ImageReader.newInstance(PREVIEW_WIDTH, PREVIEW_HEIGHT, ImageFormat.YUV_420_888, 3)
 
@@ -128,6 +129,8 @@ class CameraSender(
         imageReader?.surface?.let { surface ->
             session = createSession(listOf(surface))
             var cameraRequest = camera?.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
+            val fps: Range<Int> = Range.create(20,20)
+            cameraRequest?.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE,fps)
             cameraRequest?.addTarget(surface)
             cameraRequest?.build()?.let {
                 session?.setRepeatingRequest(it, null, null)

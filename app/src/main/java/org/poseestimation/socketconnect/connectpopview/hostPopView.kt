@@ -19,7 +19,7 @@ class hostPopView :PopupWindow () {
     lateinit var btnSearchDeviceOpen : Button
     lateinit var slaveList:ListView
     companion object {
-         var devices: ArrayList<Device> = arrayListOf()
+         var devices: MutableMap<String,Device> = mutableMapOf()
          fun sendCommand(device: Device) {
             //发送命令
             val command = Command("openCamera".toByteArray(), object : Command.Callback {
@@ -44,7 +44,12 @@ class hostPopView :PopupWindow () {
         slaveList=view.findViewById(R.id.slavelist)
         slaveList.setOnItemClickListener(object :AdapterView.OnItemClickListener {
             override fun onItemClick(p0: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                sendCommand(devices[position])
+                val listView = p0 as ListView
+                val listAdapter = listView.adapter
+                val choosed: String = listAdapter.getItem(position)  as String
+                devices.get(choosed)?.let {
+                    sendCommand(it)
+                }
             }
         })
         btnSearchDeviceOpen.setOnClickListener(handlerOnClick)
@@ -89,11 +94,11 @@ class hostPopView :PopupWindow () {
 
             override fun onSearchedNewOne(device: Device?) {
                 device?.let {
-                    devices.add(it)
+                    devices.put(it.uuid,it)
                     var slaveList_str: MutableList<String> = arrayListOf()
                     for(item in devices)
                     {
-                        slaveList_str.add(item.uuid)
+                        slaveList_str.add(item.value.uuid)
                     }
                     var adapter: ArrayAdapter<String> =
                         ArrayAdapter<String>(
@@ -108,7 +113,11 @@ class hostPopView :PopupWindow () {
     }
     public fun stopSearch() {
         DeviceSearcher.close()
-
+        slaveList.setAdapter(ArrayAdapter<String>(
+            mContext!!,
+            android.R.layout.simple_list_item_1,
+            arrayListOf()))
+        devices.clear()
     }
     public fun clear()
     {

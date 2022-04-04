@@ -24,6 +24,7 @@ import android.graphics.Matrix
 import android.graphics.Rect
 import android.media.Image
 import android.util.Log
+import android.view.SurfaceHolder
 import android.view.SurfaceView
 import android.widget.Toast
 import org.poseestimation.*
@@ -65,6 +66,7 @@ class CameraReceiver(
     private var detector: PoseDetector? = null
     private var isTrackerEnabled = false
     private var yuvConverter: YuvToRgbConverter = YuvToRgbConverter(surfaceView.context)
+    private var yuvConverter2: org.poseestimation.videodecoder.YuvToRgbConverter = org.poseestimation.videodecoder.YuvToRgbConverter(surfaceView.context)
     private lateinit var imageBitmap: Bitmap
     /**decoder*/
     private lateinit var decoder: DecoderH264
@@ -122,33 +124,46 @@ class CameraReceiver(
             }
         }))
         Users.add(ResJSdata(0))
+        surfaceView.holder.addCallback(object :SurfaceHolder.Callback{
+            override fun surfaceChanged(p0: SurfaceHolder, p1: Int, p2: Int, p3: Int) {
 
-        decoder= DecoderH264(CameraReceiver.PREVIEW_WIDTH, CameraReceiver.PREVIEW_HEIGHT,
-            object :DecoderH264.DecoderListener{
-            override fun YUV420(image: Image?) {
-                if (image != null) {
-                    if (!::imageBitmap.isInitialized) {
-                        imageBitmap =
-                            Bitmap.createBitmap(
-                                CameraReceiver.PREVIEW_WIDTH,
-                                CameraReceiver.PREVIEW_HEIGHT,
-                                Bitmap.Config.ARGB_8888
-                            )
-                    }
-                    yuvConverter.yuvToRgb(image, imageBitmap)
-                    val rotateMatrix = Matrix()
-                    rotateMatrix.postScale(1.0f, -1.0f);
-                    rotateMatrix.postRotate(180.0f)
+            }
+            override fun surfaceCreated(p0: SurfaceHolder) {
+                decoder= DecoderH264(p0.surface,CameraReceiver.PREVIEW_WIDTH, CameraReceiver.PREVIEW_HEIGHT,
+                    object :DecoderH264.DecoderListener{
+                        override fun YUV420(image: Image?) {
+                            if (image != null) {
+                                if (!::imageBitmap.isInitialized) {
+                                    imageBitmap =
+                                        Bitmap.createBitmap(
+                                            CameraReceiver.PREVIEW_WIDTH,
+                                            CameraReceiver.PREVIEW_HEIGHT,
+                                            Bitmap.Config.ARGB_8888
+                                        )
+                                }
+//                    yuvConverter2.yuvToRgb(image,imageBitmap)
+                                yuvConverter.yuvToRgb(image, imageBitmap)
+                                val rotateMatrix = Matrix()
+                                rotateMatrix.postScale(1.0f, -1.0f);
+                                rotateMatrix.postRotate(180.0f)
 
-                    val rotatedBitmap = Bitmap.createBitmap(
-                        imageBitmap, 0, 0, CameraReceiver.PREVIEW_WIDTH, CameraReceiver.PREVIEW_HEIGHT,
-                        rotateMatrix, false
-                    )
-                    processImage(rotatedBitmap)
-                    image.close()
-                }
+                                val rotatedBitmap = Bitmap.createBitmap(
+                                    imageBitmap, 0, 0, CameraReceiver.PREVIEW_WIDTH, CameraReceiver.PREVIEW_HEIGHT,
+                                    rotateMatrix, false
+                                )
+                                processImage(rotatedBitmap)
+                                image.close()
+                            }
+                        }
+                    })
+            }
+
+            override fun surfaceDestroyed(p0: SurfaceHolder) {
+
             }
         })
+
+
     }
 
     fun setDetector(detector: PoseDetector) {

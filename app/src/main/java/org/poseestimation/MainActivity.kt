@@ -238,7 +238,7 @@ class MainActivity :AppCompatActivity() {
     override fun onKeyDown(keyCode:Int, event: KeyEvent?):Boolean {
         // TODO Auto-generated method stub
         if(keyCode==KeyEvent.KEYCODE_BACK){
-            val msg="您的本次运动记录将不会保存，确定退出码？"
+            val msg="您的本次运动记录将不会保存，确定退出吗？"
             AlertDialog.Builder(this)
                 .setMessage(msg)
                 .setTitle("注意")

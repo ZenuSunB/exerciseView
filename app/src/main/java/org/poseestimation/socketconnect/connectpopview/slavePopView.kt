@@ -104,7 +104,10 @@ class slavePopView(private val activity: Activity?=null) :PopupWindow () {
     }
     public fun stopListen() {
         DeviceSearchResponser.close()
-
+        hostList.setAdapter(ArrayAdapter<String>(
+            mContext!!,
+            android.R.layout.simple_list_item_1,
+            arrayListOf()))
     }
 
 

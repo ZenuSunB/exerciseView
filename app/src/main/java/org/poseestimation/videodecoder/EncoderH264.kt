@@ -13,7 +13,7 @@ class EncoderH264(
         private var height:Int,
         private var listener: EncoderListener? = null)
 {
-    private var frameRate:Int=30
+    private var frameRate:Int=20
     private lateinit var mediaCodec: MediaCodec
     private val COLOR_FormatI420 = 1
     private val COLOR_FormatNV21 = 2
@@ -31,7 +31,7 @@ class EncoderH264(
         //描述视频格式的帧速率（以帧/秒为单位）的键。帧率，一般在15至30之内，太小容易造成视频卡顿。
         mediaFormat.setInteger(MediaFormat.KEY_FRAME_RATE, frameRate)
         //色彩格式，具体查看相关API，不同设备支持的色彩格式不尽相同
-        mediaFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar)
+        mediaFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible  )
         //关键帧间隔时间，单位是秒
         mediaFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1);
         mediaCodec.configure(mediaFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
@@ -39,10 +39,9 @@ class EncoderH264(
         mediaCodec.start()
     }
     public fun encoderH264(image: Image) {
-        var nv21=getDataFromImage(image,COLOR_FormatNV21)
-        var bytes = NV21ToNv12(nv21, width, height)
-////        var nv12 = rotateNV2by90(bytes, width, height)
-//        var nv12=nv21
+        var I420=getDataFromImage(image,COLOR_FormatI420)
+//        var nv12 = NV21ToNv12(nv21, width, height)
+//      var nv12 = rotateNV2by90(bytes, width, height)
         //拿到输入缓冲区,用于传送数据进行编码
         var inputBuffers = mediaCodec.inputBuffers
         //拿到输出缓冲区,用于取到编码后的数据
@@ -53,16 +52,17 @@ class EncoderH264(
             var inputBuffer = inputBuffers[inputBufferIndex]
             inputBuffer.clear()
             //往输入缓冲区写入数据
-            inputBuffer.put(nv21)
+            inputBuffer.put(I420)
             //五个参数，第一个是输入缓冲区的索引，第二个数据是输入缓冲区起始索引，第三个是放入的数据大小，第四个是时间戳，保证递增就是
             mediaCodec.queueInputBuffer(
                 inputBufferIndex,
                 0,
-                nv21.count(),
-                System.nanoTime() / 1000,
+                I420.count(),
+                System.nanoTime() ,
                 0
             )
         }
+
         val bufferInfo = MediaCodec.BufferInfo()
         //拿到输出缓冲区的索引
         var outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, 0)
@@ -132,7 +132,23 @@ class EncoderH264(
         }
         return false
     }
-
+    fun YV12toYUV420PackedSemiPlanar(input: ByteArray, width: Int, height: Int): ByteArray? {
+        val frameSize = width * height
+        val qFrameSize = frameSize / 4
+        val output = ByteArray(input.size)
+        System.arraycopy(input, 0, output, 0, frameSize)
+        for (i in 0 until qFrameSize) {
+            val b = input[frameSize + qFrameSize + i - 32 - 320]
+            output[frameSize + i * 2] = b
+            output[frameSize + i * 2 + 1] = input[frameSize + i - 32 - 320]
+        }
+        System.arraycopy(input, 0, output, 0, frameSize) // Y
+        for (i in 0 until qFrameSize) {
+            output[frameSize + i * 2] = input[frameSize + i + qFrameSize] // Cb (U)
+            output[frameSize + i * 2 + 1] = input[frameSize + i] // Cr (V)
+        }
+        return output
+    }
     private fun getDataFromImage(image:Image, colorFormat:Int):ByteArray
     {
         if (colorFormat != COLOR_FormatI420 && colorFormat != COLOR_FormatNV21) {
