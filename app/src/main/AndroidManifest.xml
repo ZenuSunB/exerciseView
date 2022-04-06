@@ -25,11 +25,6 @@
         android:requestLegacyExternalStorage="true">>
 
         <activity
-            android:name=".CountDown"
-            android:screenOrientation="landscape"
-            android:exported="true" />
-
-        <activity
             android:name=".SenderActivity"
             android:screenOrientation="landscape"
             android:exported="true">

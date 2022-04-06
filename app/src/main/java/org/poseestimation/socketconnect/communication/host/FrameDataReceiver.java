@@ -83,11 +83,10 @@ public class FrameDataReceiver {
                     {
                         int b = is.read();
                         if (b == -1) {
-                            Log.d("TTTT", "run: -1-1-1-1-1-1");
                             FrameLength = 0;
                             type = 0;
                             FrameLengthOffSet = 0;
-                            continue;
+                            break;
                         }
                         else if ((byte) b == CommunicationKey.FRAMEHEAD_BEGIN)
                         {
