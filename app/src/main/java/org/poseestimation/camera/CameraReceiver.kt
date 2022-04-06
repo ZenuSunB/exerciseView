@@ -23,30 +23,22 @@ import android.graphics.Bitmap
 import android.graphics.Matrix
 import android.graphics.Rect
 import android.media.Image
-import android.util.Log
-import android.view.SurfaceHolder
 import android.view.SurfaceView
 import android.widget.Toast
-import org.poseestimation.*
+import org.poseestimation.VisualizationUtils
+import org.poseestimation.YuvToRgbConverter
 import org.poseestimation.data.Person
 import org.poseestimation.data.ResJSdata
 import org.poseestimation.data.Sample
 import org.poseestimation.ml.PoseDetector
 import org.poseestimation.socketconnect.communication.host.FrameDataReceiver
-import org.poseestimation.socketconnect.connectpopview.slavePopView
 import org.poseestimation.utils.DTWprocess
 import org.poseestimation.utils.Voice
-import org.poseestimation.videodecoder.DecoderH264
-import org.poseestimation.videodecoder.EncoderH264
-import org.poseestimation.videodecoder.NV21ToBitmap
-import java.io.FileOutputStream
-
 import java.util.*
-import kotlin.jvm.internal.Ref
 
 
 class CameraReceiver(
-//    private val videoView:VideoView,0...........................................................................................................................................................................................................................3
+//    private val videoView:VideoView
     private val surfaceView: SurfaceView,
     private val listener: CameraReceiverListener? = null,
     private val context: Context,
@@ -68,24 +60,13 @@ class CameraReceiver(
     private var isTrackerEnabled = false
     private var yuvConverter: YuvToRgbConverter = YuvToRgbConverter(surfaceView.context)
     private lateinit var imageBitmap: Bitmap
-    /**decoder*/
-//    private lateinit var decoder: DecoderH264
-    private var H264FrameData:ByteArray=ByteArray(0)
-    @Synchronized
-    private fun visitH264FrameData(bytes:ByteArray,type:Int):ByteArray
-    {
-        when(type)
-        {
-            0->{
-                return H264FrameData
-            }
-            1->{
-                H264FrameData=bytes
-            }
-        }
-        return H264FrameData
-    }
 
+    @Volatile
+    private var newestBitmap:Bitmap?=null;
+    @Volatile
+    private var newestPersons: MutableList<Person>?=null;
+
+    private val isOpen = false
     //语言播放器
     private val  voice=Voice(context)
 
@@ -104,11 +85,15 @@ class CameraReceiver(
     //初期检测人是否在摄像头内部
     private var isPersonDetect:Boolean=false
 
+    //全局最新的帧
+
     //定时器设置
     private var NewFrameGenerator = Timer().schedule(object :TimerTask(){
         override fun run() {
-
-//            processImage()
+            var tempBitmap:Bitmap?=newestBitmap;
+            tempBitmap?.let{
+                processImage(tempBitmap)
+            }
         }
     },0,100)
 
@@ -124,33 +109,6 @@ class CameraReceiver(
             }
         }))
         Users.add(ResJSdata(0))
-//        decoder= DecoderH264(CameraReceiver.PREVIEW_WIDTH, CameraReceiver.PREVIEW_HEIGHT,
-//            object :DecoderH264.DecoderListener{
-//                override fun YUV420(image: Image?) {
-//                    if (image != null) {
-//                        if (!::imageBitmap.isInitialized) {
-//                            imageBitmap =
-//                                Bitmap.createBitmap(
-//                                    CameraReceiver.PREVIEW_WIDTH,
-//                                    CameraReceiver.PREVIEW_HEIGHT,
-//                                    Bitmap.Config.ARGB_8888
-//                                )
-//                        }
-////                    yuvConverter2.yuvToRgb(image,imageBitmap)
-//                        yuvConverter.yuvToRgb(image, imageBitmap)
-//                        val rotateMatrix = Matrix()
-//                        rotateMatrix.postScale(1.0f, -1.0f);
-//                        rotateMatrix.postRotate(180.0f)
-//                        val rotatedBitmap = Bitmap.createBitmap(
-//                            imageBitmap, 0, 0, CameraReceiver.PREVIEW_WIDTH, CameraReceiver.PREVIEW_HEIGHT,
-//                            rotateMatrix, false
-//                        )
-//                        processImage(rotatedBitmap)
-//                        image.close()
-//                    }
-//                }
-//            })
-
 
     }
 
@@ -166,6 +124,7 @@ class CameraReceiver(
 
     fun pause()
     {
+
     }
 
     fun resume() {
@@ -174,10 +133,11 @@ class CameraReceiver(
     fun close() {
         detector?.close()
         detector = null
+
     }
 
-    // process image
-    private fun processImage(bitmap: Bitmap) {
+    //process image
+    private fun processImage(bitmap: Bitmap){
         val persons = mutableListOf<Person>()
         //总分数
         var score:Double=0.0
@@ -192,7 +152,7 @@ class CameraReceiver(
                     //捕获当前帧中的用户关节点
                     persons.addAll(it)
                     //捕获对应时刻的标准动作关节点
-//                    persons.addAll(Samples[index].getPersonNow())
+//                   persons.addAll(Samples[index].getPersonNow())
                     //如果获取的帧可信，则处理
                     if (it.get(0).isTrust()) {
                         //输入用户关节点动作，进行计算
@@ -204,19 +164,22 @@ class CameraReceiver(
                     Users[index].append(scoreBypart, uservector)
                     listener?.onImageprocessListener(score.toInt())
                 }
+                print("");
             }
-//            else if (isPersonDetect == false) {
-//                detector?.estimatePoses(bitmap)?.let {
-//                    if (it.get(0).isTrust()) {
-//                        if(Samples[index].tryFirstFrame(it)>=97) {
-//                            isPersonDetect = true
-//                            listener?.onPersonDetected()
-//                        }
-//                    }
-//                }
-//            }
+            else if (isPersonDetect == false) {
+                detector?.estimatePoses(bitmap)?.let {
+                    if (it.get(0).isTrust()) {
+                        if(Samples[index].tryFirstFrame(it)>=97) {
+                            isPersonDetect = true
+                            listener?.onPersonDetected()
+                        }
+                    }
+                }
+            }
         }
-        visualize(persons, bitmap)
+        newestPersons=persons
+//        return persons;
+//        visualize(persons, bitmap)
     }
 
     private fun visualize(persons: List<Person>, bitmap: Bitmap) {
@@ -262,9 +225,6 @@ class CameraReceiver(
         //开始接受frame
         FrameDataReceiver.open(object : FrameDataReceiver.FrameDataListener {
             override fun onReceive(image: Image) {
-//                    visitH264FrameData(it,1)
-//                    fos?.write(data)
-//                    decoder.decoderH264(data)
                 if (image != null) {
                     if (!::imageBitmap.isInitialized) {
                         imageBitmap =
@@ -278,21 +238,24 @@ class CameraReceiver(
                     val rotateMatrix = Matrix()
                     rotateMatrix.postScale(1.0f, -1.0f);
                     rotateMatrix.postRotate(180.0f)
+
                     val rotatedBitmap = Bitmap.createBitmap(
-                        imageBitmap,
-                        0,
-                        0,
-                        CameraReceiver.PREVIEW_WIDTH,
-                        CameraReceiver.PREVIEW_HEIGHT,
-                        rotateMatrix,
-                        false
+                        imageBitmap, 0, 0, CameraReceiver.PREVIEW_WIDTH, CameraReceiver.PREVIEW_HEIGHT,
+                        rotateMatrix, false
                     )
-                    processImage(rotatedBitmap)
+                    newestBitmap=rotatedBitmap
+                    var oldPersons = mutableListOf<Person>();
+                    newestPersons?.let{
+                        oldPersons=it
+                    }
+                    visualize(oldPersons,rotatedBitmap)
                     image.close()
                 }
             }
         })
     }
+
+
 
 
     interface CameraReceiverListener {
@@ -316,7 +279,6 @@ class CameraReceiver(
         isImageprocess=flag
         return isImageprocess
     }
-
 
 
 }

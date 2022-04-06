@@ -2,38 +2,72 @@ package org.poseestimation.socketconnect.communication.slave;
 
 import android.util.Log;
 
+import org.poseestimation.R;
+import org.poseestimation.socketconnect.Device;
 import org.poseestimation.socketconnect.RemoteConst;
 import org.poseestimation.socketconnect.communication.CommunicationKey;
 
+import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.RejectedExecutionHandler;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 
-public class FrameDataSender {
-    private static ThreadPoolExecutor threadPool =
-            new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60,
-                    TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), new SendFrameDataThreadFactory(),
-                    new RejectedExecutionHandler() {
-                        @Override
-                        public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
-                            throw new RejectedExecutionException();
-                        }
-                    });
+public class FrameDataSender  {
+    private static ExecutorService executorService = Executors.newSingleThreadExecutor();
+    private static Socket socket;
+    private static DataOutputStream os;
+    public static boolean isOpen=false;
+    public static void open(Device device)
+    {
+        try {
+            isOpen=true;
+            socket = new Socket();
+            socket.connect(new InetSocketAddress(device.getIp(), RemoteConst.FRAME_RECEIVE_PORT));
+            os = new DataOutputStream(socket.getOutputStream());
+        }
+        catch  (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
-
+    public static void close()
+    {
+        try {
+            if(socket!=null)
+            {
+                isOpen=false;
+                addFrameTeminateSignal();
+                socket.shutdownOutput();
+                os=null;
+                socket.close();
+                socket = null;
+            }
+        }
+        catch  (IOException e) {
+            e.printStackTrace();
+        }
+    }
     public static void addFrameData(final FrameData frameData){
         addTask(new FrameDataSender.FrameDataRunnable(frameData));
     }
 
     private static void addTask(FrameDataSender.FrameDataRunnable runnable){
         try{
-            threadPool.execute(runnable);
+            executorService.execute(runnable);
         }catch (RejectedExecutionException e){
             e.printStackTrace();
             if(runnable.frameData.getCallback()!=null){
@@ -41,30 +75,46 @@ public class FrameDataSender {
             }
         }
     }
+
     private static class FrameDataRunnable implements Runnable {
-
         FrameData frameData;
-
         public FrameDataRunnable(FrameData frameData) {
             this.frameData = frameData;
         }
-
         @Override
         public void run() {
-            Socket socket = new Socket();
             try {
-                socket.connect(new InetSocketAddress(frameData.getDestIp(), RemoteConst.FRAME_RECEIVE_PORT));
-                DataOutputStream os = new DataOutputStream(socket.getOutputStream());
-                //发送命令内容
-                os.write(frameData.getContent());
+                if(os!=null) {
+                    Log.d("Send", "Data:" + frameData.getSize());
+                    os.write(frameData.getContent());
+                    os.flush();
+                }
             } catch (IOException e) {
                 e.printStackTrace();
-            } finally {
-                try {
-                    socket.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
+            }
+        }
+    }
+
+    public static void addFrameTeminateSignal(){
+        Runnable tast=new FrameDataSender.FrameTeminateRunnable();
+        try{
+            executorService.execute(tast);
+        }catch (RejectedExecutionException e){
+            e.printStackTrace();
+        }
+    }
+
+
+    private static class FrameTeminateRunnable implements Runnable {
+        public FrameTeminateRunnable( ){}
+        @Override
+        public void run() {
+            try {
+                if(os!=null) {
+                    os.write(CommunicationKey.FRAMESEND_TEMINATE);
                 }
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         }
     }

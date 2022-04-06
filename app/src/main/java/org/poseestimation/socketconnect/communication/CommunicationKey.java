@@ -11,4 +11,6 @@ public class CommunicationKey {
     public static final String EOF = "\r";
     public static final byte FRAMEHEAD_BEGIN = (byte)'<';
     public static final byte FRAMEHEAD_END = (byte)'>';
+    public static final byte[] FRAMESEND_TEMINATE=
+            new byte[]{FRAMEHEAD_END,FRAMEHEAD_END,FRAMEHEAD_END,FRAMEHEAD_END,FRAMEHEAD_END,FRAMEHEAD_END,FRAMEHEAD_END,FRAMEHEAD_END};
 }

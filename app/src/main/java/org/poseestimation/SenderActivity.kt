@@ -19,13 +19,12 @@ import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.poseestimation.camera.CameraSender
-import org.poseestimation.socketconnect.Device
-import org.poseestimation.socketconnect.communication.CommunicationKey
+
 import org.poseestimation.socketconnect.communication.slave.CommandReceiver
-import org.poseestimation.socketconnect.connectpopview.hostPopView
+import org.poseestimation.socketconnect.communication.slave.FrameDataSender
 import org.poseestimation.socketconnect.connectpopview.slavePopView
-import org.poseestimation.socketconnect.search.DeviceSearchResponser
-import org.poseestimation.socketconnect.search.DeviceSearcher
+import kotlin.concurrent.thread
+
 
 class SenderActivity :AppCompatActivity() {
     companion object {
@@ -98,7 +97,6 @@ class SenderActivity :AppCompatActivity() {
             )
         }
 
-//        openCamera()
     }
 
     override fun onResume() {
@@ -108,12 +106,15 @@ class SenderActivity :AppCompatActivity() {
 
     override fun onPause() {
         cameraSender?.pause()
+
         super.onPause()
     }
 
     override fun onStop() {
         super.onStop()
         slavepopView.dismiss()
+        cameraSender?.close()
+        FrameDataSender.close()
     }
 
 
@@ -145,6 +146,7 @@ class SenderActivity :AppCompatActivity() {
         when(demand)
         {
             "openCamera"->{
+
                 openCamera()
             }
 

@@ -12,8 +12,13 @@ public class RemoteConst {
 	/**
 	 * 用于接收帧数据的端口
 	 */
-	public static final int FRAME_RECEIVE_PORT = 10086;
+	public static final int FRAME_RECEIVE_PORT = 10186;
 	/**
+	 * 用于接收帧数据的端口
+	 */
+	public static final int FRAME_SENDER_PORT = 10087;
+	/**
+	 *
 	 * 设备搜索次数
 	 */
 	public static final int SEARCH_DEVICE_TIMES = 3;

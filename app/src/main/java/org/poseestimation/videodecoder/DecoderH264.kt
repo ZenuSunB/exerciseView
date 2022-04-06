@@ -12,7 +12,7 @@ class DecoderH264(
     private val width:Int,
     private val height:Int,
     private var listener: DecoderListener? = null) {
-    private var frameRate: Int = 30
+    private var frameRate: Int = 25
     private val COLOR_FormatI420 = 1
     private val COLOR_FormatNV21 = 2
     private fun isImageFormatSupported(image: Image): Boolean {
@@ -29,7 +29,7 @@ class DecoderH264(
         //height和width一般都是照相机的height和width。
         var mediaFormat = MediaFormat.createVideoFormat("video/avc", width, height)
         //描述平均位速率（以位/秒为单位）的键。 关联的值是一个整数
-        mediaFormat.setInteger(MediaFormat.KEY_BIT_RATE, width * height* 5)
+        mediaFormat.setInteger(MediaFormat.KEY_BIT_RATE, width * height)
         //描述视频格式的帧速率（以帧/秒为单位）的键。帧率，一般在15至30之内，太小容易造成视频卡顿。
         mediaFormat.setInteger(MediaFormat.KEY_FRAME_RATE, frameRate)
         //关键帧间隔时间，单位是秒

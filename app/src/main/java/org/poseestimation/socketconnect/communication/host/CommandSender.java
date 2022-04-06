@@ -22,7 +22,7 @@
      */
     public class CommandSender {
         private static ThreadPoolExecutor threadPool =
-                new ThreadPoolExecutor(10, 10, 1,
+                new ThreadPoolExecutor(2, 2, 1,
                 TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), new SendCommandThreadFactory(),
                 new RejectedExecutionHandler() {
             @Override

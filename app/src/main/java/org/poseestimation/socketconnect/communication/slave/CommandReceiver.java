@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class CommandReceiver {
 
-    private static ThreadPoolExecutor threadPool = new ThreadPoolExecutor(7, 8, 60, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), new ReceiveCommandThreadFactory(), new RejectedExecutionHandler() {
+    private static ThreadPoolExecutor threadPool = new ThreadPoolExecutor(3, 4, 60, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), new ReceiveCommandThreadFactory(), new RejectedExecutionHandler() {
         @Override
         public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
             throw new RejectedExecutionException();

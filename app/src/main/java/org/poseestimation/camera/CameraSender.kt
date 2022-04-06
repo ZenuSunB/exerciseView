@@ -40,11 +40,13 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import org.poseestimation.*
 import kotlin.coroutines.resumeWithException
 import org.poseestimation.data.Person
+import org.poseestimation.socketconnect.communication.slave.FrameDataSender
 import org.poseestimation.socketconnect.connectpopview.slavePopView
 import org.poseestimation.videodecoder.EncoderH264
 import java.io.File
 import java.io.FileOutputStream
 import java.util.*
+import kotlin.concurrent.thread
 
 class CameraSender(
 //    private val videoView:VideoView,0...........................................................................................................................................................................................................................3
@@ -96,12 +98,9 @@ class CameraSender(
 
     //初始化摄像机，并设置监听器
     suspend fun initCamera() {
-//        createFile()
         camera = openCamera(cameraManager, cameraId)
-
         imageReader =
             ImageReader.newInstance(PREVIEW_WIDTH, PREVIEW_HEIGHT, ImageFormat.YUV_420_888, 3)
-
         imageReader?.setOnImageAvailableListener({ reader ->
             val image = reader.acquireLatestImage()
             if (image != null) {
@@ -139,7 +138,7 @@ class CameraSender(
         }
         encoder= EncoderH264(PREVIEW_WIDTH,PREVIEW_HEIGHT,object :EncoderH264.EncoderListener{
             override fun h264(data: ByteArray) {
-                Log.d("TAG",data.count().toString())
+                Log.d("TAG","H264 SIZE:"+data.size)
                     slavePopView.hostDevice?.let {
 //                        fos?.write(data)
                         slavePopView.sendFrameData(data,it)

@@ -28,6 +28,7 @@ import org.poseestimation.data.Sample
 import org.poseestimation.data.VideoViewRepetend
 import org.poseestimation.ml.ModelType
 import org.poseestimation.ml.MoveNet
+import org.poseestimation.socketconnect.communication.host.FrameDataReceiver
 import org.poseestimation.socketconnect.connectpopview.hostPopView
 import kotlin.concurrent.thread
 
@@ -83,13 +84,13 @@ class ReceiverActivity: AppCompatActivity() {
                     isSearchDeviceOpen = false
                     hostpopView.btnSearchDeviceOpen.setText("开始搜索局域网下的设备")
                     Toast.makeText(this, "设备搜索已关闭", Toast.LENGTH_SHORT).show()
+
                 } else {
                     //设备搜索开始
                     isSearchDeviceOpen = true
                     hostpopView.btnSearchDeviceOpen.setText("设备搜索关闭")
                     Toast.makeText(this, "设备搜索开始", Toast.LENGTH_SHORT).show()
                     hostpopView.startSearch()
-
                 }
             })
             hostpopView.showAtLocation(
@@ -187,12 +188,17 @@ class ReceiverActivity: AppCompatActivity() {
     override fun onPause() {
         cameraReceiver?.pause()
 //        videoviewrepetend?.videoView?.pause()
+        hostpopView.dismiss()
+        cameraReceiver?.close()
+        FrameDataReceiver.close()
         super.onPause()
     }
 
     override fun onStop() {
         super.onStop()
         hostpopView.dismiss()
+        cameraReceiver?.close()
+        FrameDataReceiver.close()
     }
 
     // check if permission is granted or not.
@@ -226,9 +232,8 @@ class ReceiverActivity: AppCompatActivity() {
                         ExerciseSchedule.getTag(videoviewrepetend!!.index),
                         //*************************************************************
                         ExerciseSchedule.exerciseName.get(videoviewrepetend!!.index)).apply {
+                        thread{prepareCamera()} }
                         //*************************************************************
-                        prepareCamera()
-                    }
                 lifecycleScope.launch(Dispatchers.Main) {
                     cameraReceiver?.initCamera()
                 }

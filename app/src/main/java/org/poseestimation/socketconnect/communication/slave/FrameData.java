@@ -13,6 +13,8 @@ public class FrameData {
     private String destIp;
     private byte[] bytes;
     private Callback callback;
+    public int index=Findex++;
+    static public int Findex=0;
     public FrameData(byte[] bytes, Callback callback){
         this.bytes = new byte[bytes.length+12];
         int offset=0;
@@ -48,6 +50,10 @@ public class FrameData {
         this.destIp = destIp;
     }
 
+    public int getSize()
+    {
+        return bytes.length;
+    }
     public Callback getCallback() {
         return callback;
     }

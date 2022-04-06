@@ -13,10 +13,13 @@ class EncoderH264(
         private var height:Int,
         private var listener: EncoderListener? = null)
 {
-    private var frameRate:Int=30
+    private var frameRate:Int=25
     private lateinit var mediaCodec: MediaCodec
     private val COLOR_FormatI420 = 1
     private val COLOR_FormatNV21 = 2
+    companion object{
+        var index:Int=0;
+    }
     init{
         initMediaCodec()
     }
@@ -27,10 +30,10 @@ class EncoderH264(
         //因为获取到的视频帧数据是逆时针旋转了90度的，所以这里宽高需要对调
         var mediaFormat = MediaFormat.createVideoFormat("video/avc", width, height)
         //描述平均位速率（以位/秒为单位）的键。 关联的值是一个整数
-        mediaFormat.setInteger(MediaFormat.KEY_BIT_RATE, width * height* 5)
+        mediaFormat.setInteger(MediaFormat.KEY_BIT_RATE, width * height)
         //描述视频格式的帧速率（以帧/秒为单位）的键。帧率，一般在15至30之内，太小容易造成视频卡顿。
         mediaFormat.setInteger(MediaFormat.KEY_FRAME_RATE, frameRate)
-//        mediaFormat.setInteger(MediaFormat.KEY_BITRATE_MODE,MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_CBR_FD)
+//        mediaFormat.setInteger(MediaFormat.KEY_BITRATE_MODE,MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_CBR)
         //色彩格式，具体查看相关API，不同设备支持的色彩格式不尽相同
         mediaFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar   )
         //关键帧间隔时间，单位是秒
@@ -41,6 +44,7 @@ class EncoderH264(
         mediaCodec.start()
     }
     public fun encoderH264(image: Image) {
+        index++;
         var nv21=getDataFromImage(image,COLOR_FormatNV21)
         var nv12 = NV21ToNv12(nv21, width, height)
         //拿到输入缓冲区,用于传送数据进行编码

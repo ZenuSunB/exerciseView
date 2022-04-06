@@ -17,6 +17,7 @@ import org.poseestimation.socketconnect.communication.host.CommandSender
 import org.poseestimation.socketconnect.communication.slave.FrameData
 import org.poseestimation.socketconnect.communication.slave.FrameDataSender
 import org.poseestimation.socketconnect.search.DeviceSearchResponser
+import kotlin.concurrent.thread
 
 
 class slavePopView(private val activity: Activity?=null) :PopupWindow () {
@@ -83,12 +84,11 @@ class slavePopView(private val activity: Activity?=null) :PopupWindow () {
     public fun startListen() {
         DeviceSearchResponser.open(object : DeviceSearchResponser.OnSearchListener{
             override fun onGetHost(device: Device?) {
-                activity?.runOnUiThread {
                     device?.let {
                         hostDevice = it
                         var hostList_str: MutableList<String> = arrayListOf()
                         hostList_str.add(hostDevice!!.uuid)
-
+                        activity?.runOnUiThread {
                         var adapter: ArrayAdapter<String> =
                             ArrayAdapter<String>(
                                 mContext!!,
@@ -96,8 +96,14 @@ class slavePopView(private val activity: Activity?=null) :PopupWindow () {
                                 hostList_str
                             )
                         hostList.setAdapter(adapter)
+                            thread{
+                                if(!FrameDataSender.isOpen)
+                                    FrameDataSender.open(slavePopView.hostDevice)
+                            }
+                        }
+
+
                     }
-                }
             }
         })
 
@@ -109,6 +115,7 @@ class slavePopView(private val activity: Activity?=null) :PopupWindow () {
             android.R.layout.simple_list_item_1,
             arrayListOf()))
     }
+
 
 
 }
