@@ -9,7 +9,7 @@
     tools:context=".MainActivity">
 
 
-    <org.poseestimation.SquareProgress
+    <org.poseestimation.layoutImpliment.SquareProgress
         android:id="@+id/sp"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />

@@ -96,6 +96,7 @@ class CameraSender(
     /**dcoder*/
     private lateinit var encoder: EncoderH264
 
+
     //初始化摄像机，并设置监听器
     suspend fun initCamera() {
         camera = openCamera(cameraManager, cameraId)

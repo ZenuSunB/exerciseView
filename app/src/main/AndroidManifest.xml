@@ -25,6 +25,23 @@
         android:requestLegacyExternalStorage="true">>
 
         <activity
+            android:name=".socketconnect.connectview.hostviewActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>/>
+        </activity>
+
+        <activity
+            android:name=".testActivity"
+            android:exported="true">
+<!--            <intent-filter>-->
+<!--                <action android:name="android.intent.action.MAIN" />-->
+<!--                <category android:name="android.intent.category.LAUNCHER" />-->
+<!--            </intent-filter>/>-->
+        </activity>
+        <activity
             android:name=".SenderActivity"
             android:screenOrientation="landscape"
             android:exported="true">
@@ -38,10 +55,10 @@
             android:name=".ReceiverActivity"
             android:screenOrientation="landscape"
             android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>/>
+<!--            <intent-filter>-->
+<!--                <action android:name="android.intent.action.MAIN" />-->
+<!--                <category android:name="android.intent.category.LAUNCHER" />-->
+<!--            </intent-filter>/>-->
         </activity>
         <activity android:name=".MainActivity"
             android:screenOrientation="landscape">

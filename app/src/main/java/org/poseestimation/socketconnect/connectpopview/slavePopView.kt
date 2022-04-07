@@ -96,10 +96,7 @@ class slavePopView(private val activity: Activity?=null) :PopupWindow () {
                                 hostList_str
                             )
                         hostList.setAdapter(adapter)
-                            thread{
-                                if(!FrameDataSender.isOpen)
-                                    FrameDataSender.open(slavePopView.hostDevice)
-                            }
+
                         }
 
 

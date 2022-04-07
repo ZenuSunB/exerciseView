@@ -7,6 +7,7 @@ import android.content.DialogInterface
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.os.Process
+import android.os.SystemClock
 import android.view.*
 import android.widget.ArrayAdapter
 import android.widget.Toast
@@ -74,11 +75,14 @@ class SenderActivity :AppCompatActivity() {
                     Toast.makeText(this, "已经关闭响应", Toast.LENGTH_SHORT).show()
                     cameraSender?.close()
                     cameraSender=null
+//                    if(!FrameDataSender.isOpen)
+//                        FrameDataSender.close()
                 }
                 else{
                     //开始响应搜索
                     slavepopView.startListen()
                     isResponseOpen=true
+
                     slavepopView.btnResponseOpen.setText("关闭应答")
                     //开始接受通信命令
                     CommandReceiver.open(object : CommandReceiver.CommandListener{
@@ -146,6 +150,9 @@ class SenderActivity :AppCompatActivity() {
         when(demand)
         {
             "openCamera"->{
+                SystemClock.sleep(1500)
+                if(!FrameDataSender.isOpen)
+                    FrameDataSender.open(slavePopView.hostDevice)
 
                 openCamera()
             }

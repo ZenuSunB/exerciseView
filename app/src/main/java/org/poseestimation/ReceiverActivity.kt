@@ -9,7 +9,6 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
-import android.os.Process
 import android.provider.Settings
 import android.view.*
 import android.widget.*
@@ -22,12 +21,11 @@ import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.poseestimation.camera.CameraReceiver
-import org.poseestimation.data.ExerciseSchedule
-import org.poseestimation.data.ResJSdata
-import org.poseestimation.data.Sample
-import org.poseestimation.data.VideoViewRepetend
+import org.poseestimation.data.*
+import org.poseestimation.layoutImpliment.SquareProgress
 import org.poseestimation.ml.ModelType
 import org.poseestimation.ml.MoveNet
+import org.poseestimation.socketconnect.Device
 import org.poseestimation.socketconnect.communication.host.FrameDataReceiver
 import org.poseestimation.socketconnect.connectpopview.hostPopView
 import kotlin.concurrent.thread
@@ -35,20 +33,20 @@ import kotlin.concurrent.thread
 class ReceiverActivity: AppCompatActivity() {
     companion object {
         private const val FRAGMENT_DIALOG = "dialog"
+        public var mainSlave:Device?=null
     }
     /** A [SurfaceView] for remote camera preview.   */
     private lateinit var surfaceView: SurfaceView
-    private lateinit var hostpopView : hostPopView
-    private var isSearchDeviceOpen:Boolean=false
+//    private lateinit var hostpopView : hostPopView
+//    private var isSearchDeviceOpen:Boolean=false
 
 
     private var device = org.poseestimation.data.Device.GPU
-    private lateinit var msquareProgress:SquareProgress
+    private lateinit var msquareProgress: SquareProgress
     private lateinit var videoView: VideoView
     private lateinit var countdownView: SurfaceView
     private lateinit var countdownViewFramLayout: FrameLayout
     private var cameraReceiver: CameraReceiver? = null
-
     private val voice= org.poseestimation.utils.Voice(this)
     private var videoviewrepetend: VideoViewRepetend? =null
     private val requestPermissionLauncher =
@@ -65,6 +63,9 @@ class ReceiverActivity: AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_receiver)
+        //accept intent value
+        var bundle=intent.getExtras()
+        mainSlave=Device(bundle!!.getString("slaveIp"))
         // keep screen on while app is running
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         msquareProgress = findViewById(R.id.sp);
@@ -73,33 +74,33 @@ class ReceiverActivity: AppCompatActivity() {
         videoView = findViewById(R.id.videoView)
         countdownViewFramLayout=findViewById(R.id.countDownViewLayout)
 
-        findViewById<CoordinatorLayout>(R.id.main_layout).post {
-            //创建popview进行局域网搜索
-            hostpopView = hostPopView()
-            hostpopView.CreateRegisterPopWindow(this, View.OnClickListener {
-                if (isSearchDeviceOpen) {
-                    //设备搜索已关闭
-                    hostpopView.clear()
-                    hostpopView.stopSearch()
-                    isSearchDeviceOpen = false
-                    hostpopView.btnSearchDeviceOpen.setText("开始搜索局域网下的设备")
-                    Toast.makeText(this, "设备搜索已关闭", Toast.LENGTH_SHORT).show()
-
-                } else {
-                    //设备搜索开始
-                    isSearchDeviceOpen = true
-                    hostpopView.btnSearchDeviceOpen.setText("设备搜索关闭")
-                    Toast.makeText(this, "设备搜索开始", Toast.LENGTH_SHORT).show()
-                    hostpopView.startSearch()
-                }
-            })
-            hostpopView.showAtLocation(
-                this.findViewById(R.id.main_layout),
-                Gravity.CENTER,
-                0,
-                0
-            )
-        }
+//        findViewById<CoordinatorLayout>(R.id.main_layout).post {
+//            //创建popview进行局域网搜索
+//            hostpopView = hostPopView()
+//            hostpopView.CreateRegisterPopWindow(this, View.OnClickListener {
+//                if (isSearchDeviceOpen) {
+//                    //设备搜索已关闭
+//                    hostpopView.clear()
+//                    hostpopView.stopSearch()
+//                    isSearchDeviceOpen = false
+//                    hostpopView.btnSearchDeviceOpen.setText("开始搜索局域网下的设备")
+//                    Toast.makeText(this, "设备搜索已关闭", Toast.LENGTH_SHORT).show()
+//
+//                } else {
+//                    //设备搜索开始
+//                    isSearchDeviceOpen = true
+//                    hostpopView.btnSearchDeviceOpen.setText("设备搜索关闭")
+//                    Toast.makeText(this, "设备搜索开始", Toast.LENGTH_SHORT).show()
+//                    hostpopView.startSearch()
+//                }
+//            })
+//            hostpopView.showAtLocation(
+//                this.findViewById(R.id.main_layout),
+//                Gravity.CENTER,
+//                0,
+//                0
+//            )
+//        }
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R ||
             Environment.isExternalStorageManager()) {
@@ -188,7 +189,7 @@ class ReceiverActivity: AppCompatActivity() {
     override fun onPause() {
         cameraReceiver?.pause()
 //        videoviewrepetend?.videoView?.pause()
-        hostpopView.dismiss()
+//        hostpopView.dismiss()
         cameraReceiver?.close()
         FrameDataReceiver.close()
         super.onPause()
@@ -196,7 +197,7 @@ class ReceiverActivity: AppCompatActivity() {
 
     override fun onStop() {
         super.onStop()
-        hostpopView.dismiss()
+//        hostpopView.dismiss()
         cameraReceiver?.close()
         FrameDataReceiver.close()
     }
@@ -232,7 +233,10 @@ class ReceiverActivity: AppCompatActivity() {
                         ExerciseSchedule.getTag(videoviewrepetend!!.index),
                         //*************************************************************
                         ExerciseSchedule.exerciseName.get(videoviewrepetend!!.index)).apply {
-                        thread{prepareCamera()} }
+                            thread{
+                                prepareCamera()
+                            }
+                        }
                         //*************************************************************
                 lifecycleScope.launch(Dispatchers.Main) {
                     cameraReceiver?.initCamera()
@@ -269,7 +273,7 @@ class ReceiverActivity: AppCompatActivity() {
     override fun onKeyDown(keyCode:Int, event: KeyEvent?):Boolean {
         // TODO Auto-generated method stub
         if(keyCode== KeyEvent.KEYCODE_BACK){
-            val msg="您的本次运动记录将不会保存，确定退出码？"
+            val msg="您的本次运动记录将不会保存，确定退出吗？"
             AlertDialog.Builder(this)
                 .setMessage(msg)
                 .setTitle("注意")

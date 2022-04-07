@@ -19,10 +19,35 @@ class EncoderH264(
     private val COLOR_FormatNV21 = 2
     companion object{
         var index:Int=0;
+//        var newestFrame:Image?=null;
+//        var isNewFrame:Boolean=true;
+//
+//        public fun getFrame():Image?
+//        {
+//            synchronized(Any())
+//            {
+//                if (isNewFrame)
+//                {
+////                    isNewFrame=false;
+//                    return newestFrame;
+//                }
+//                else
+//                    return null
+//            }
+//        }
+//        public fun putFrame(frame:Image)
+//        {
+//            synchronized(Any())
+//            {
+//                isNewFrame=true;
+//                newestFrame=frame;
+//            }
+//        }
     }
     init{
         initMediaCodec()
     }
+
     private fun initMediaCodec()
     {
         mediaCodec = MediaCodec.createEncoderByType("video/avc")
@@ -40,46 +65,84 @@ class EncoderH264(
         mediaFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1);
 
         mediaCodec.configure(mediaFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
+
+//        mediaCodec.setCallback(object :MediaCodec.Callback(){
+//            override fun onError(p0: MediaCodec, p1: MediaCodec.CodecException) {
+//
+//            }
+//
+//            override fun onInputBufferAvailable(p0: MediaCodec, index: Int) {
+//                //拿到输入缓冲区,用于传送数据进行编码
+//                val tempFrame=getFrame()
+//                tempFrame?.let{
+//                    var nv21=getDataFromImage(it,COLOR_FormatNV21)
+//                    var nv12 = NV21ToNv12(nv21, width, height)
+//                    var inputBuffer: ByteBuffer? = mediaCodec.getInputBuffer(index)
+//                    inputBuffer?.clear();
+//                    inputBuffer?.put(nv12)
+//                    mediaCodec.queueInputBuffer(index,0,nv12.count(),System.nanoTime(),0)
+//                }
+//
+//            }
+//            override fun onOutputBufferAvailable(
+//                p0: MediaCodec,
+//                index: Int,
+//                info: MediaCodec.BufferInfo
+//            ) {
+//                var outputBuffer:ByteBuffer?  = mediaCodec.getOutputBuffer(index);
+//                val bufferFormat: MediaFormat = mediaCodec.getOutputFormat(index)
+//                var outData = ByteArray(info.size)
+//                outputBuffer?.get(outData);
+//                listener?.h264(outData)
+//                mediaCodec.releaseOutputBuffer(index,false);
+//            }
+//            override fun onOutputFormatChanged(p0: MediaCodec, p1: MediaFormat) {
+//
+//            }
+//        })
         //开始编码
         mediaCodec.start()
     }
-    public fun encoderH264(image: Image) {
-        index++;
-        var nv21=getDataFromImage(image,COLOR_FormatNV21)
-        var nv12 = NV21ToNv12(nv21, width, height)
-        //拿到输入缓冲区,用于传送数据进行编码
-        var inputBuffers = mediaCodec.inputBuffers
-        //拿到输出缓冲区,用于取到编码后的数据
-        val outputBuffers = mediaCodec.outputBuffers
-        val inputBufferIndex = mediaCodec.dequeueInputBuffer(-1)
-        //当输入缓冲区有效时,就是>=0
-        if (inputBufferIndex >= 0) {
-            var inputBuffer = inputBuffers[inputBufferIndex]
-            inputBuffer.clear()
-            //往输入缓冲区写入数据
-            inputBuffer.put(nv12)
-            //五个参数，第一个是输入缓冲区的索引，第二个数据是输入缓冲区起始索引，第三个是放入的数据大小，第四个是时间戳，保证递增就是
-            mediaCodec.queueInputBuffer(
-                inputBufferIndex,
-                0,
-                nv12.count(),
-                System.nanoTime() ,
-                0
-            )
-        }
 
-        val bufferInfo = MediaCodec.BufferInfo()
-        var outData:ByteArray= byteArrayOf()
-        //拿到输出缓冲区的索引
-        var outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, 0)
-        while (outputBufferIndex >= 0) {
-            var outputBuffer = outputBuffers[outputBufferIndex]
-            var outData = ByteArray(bufferInfo.size)
-            outputBuffer.get(outData);
-            //outData就是输出的h264数据
-            listener?.h264(outData)
-            mediaCodec.releaseOutputBuffer(outputBufferIndex, false);
-            outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, 0);
+    public fun encoderH264(image: Image) {
+        synchronized(Any())
+        {
+            index++;
+            var nv21 = getDataFromImage(image, COLOR_FormatNV21)
+            var nv12 = NV21ToNv12(nv21, width, height)
+            //拿到输入缓冲区,用于传送数据进行编码
+            var inputBuffers = mediaCodec.inputBuffers
+            //拿到输出缓冲区,用于取到编码后的数据
+            val outputBuffers = mediaCodec.outputBuffers
+
+            val inputBufferIndex = mediaCodec.dequeueInputBuffer(0)
+            //当输入缓冲区有效时,就是>=0
+            if (inputBufferIndex >= 0) {
+                var inputBuffer = inputBuffers[inputBufferIndex]
+                inputBuffer.clear()
+                //往输入缓冲区写入数据
+                inputBuffer.put(nv12)
+                //五个参数，第一个是输入缓冲区的索引，第二个数据是输入缓冲区起始索引，第三个是放入的数据大小，第四个是时间戳，保证递增就是
+                mediaCodec.queueInputBuffer(
+                    inputBufferIndex,
+                    0,
+                    nv12.count(),
+                    System.nanoTime(),
+                    0
+                )
+            }
+            val bufferInfo = MediaCodec.BufferInfo()
+            //拿到输出缓冲区的索引
+            var outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, 0)
+            while (outputBufferIndex >= 0) {
+                var outputBuffer = outputBuffers[outputBufferIndex]
+                var outData = ByteArray(bufferInfo.size)
+                outputBuffer.get(outData);
+                //outData就是输出的h264数据
+                listener?.h264(outData)
+                mediaCodec.releaseOutputBuffer(outputBufferIndex, false);
+                outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, 0);
+            }
         }
     }
     private fun NV21ToNv12(nv21:ByteArray,width:Int,height: Int):ByteArray

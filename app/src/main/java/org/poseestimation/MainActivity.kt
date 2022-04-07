@@ -3,8 +3,6 @@ package org.poseestimation
 import android.Manifest
 import android.app.AlertDialog
 import android.app.Dialog
-import android.app.StatusBarManager
-import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -19,9 +17,9 @@ import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import org.poseestimation.*
 import org.poseestimation.camera.CameraSource
 import org.poseestimation.data.*
+import org.poseestimation.layoutImpliment.SquareProgress
 import org.poseestimation.ml.ModelType
 import org.poseestimation.ml.MoveNet
 import kotlin.concurrent.thread
@@ -34,7 +32,7 @@ class MainActivity :AppCompatActivity() {
     private lateinit var surfaceView: SurfaceView
 
     private var device = Device.GPU
-    private lateinit var msquareProgress:SquareProgress
+    private lateinit var msquareProgress: SquareProgress
     private lateinit var videoView: VideoView
     private lateinit var countdownView: SurfaceView
     private lateinit var countdownViewFramLayout: FrameLayout

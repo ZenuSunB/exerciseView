@@ -3,6 +3,7 @@ package org.poseestimation.socketconnect;
 import android.os.Build;
 
 import java.net.DatagramPacket;
+import java.text.DecimalFormat;
 
 /**
  * 局域网中的设备
@@ -15,6 +16,10 @@ public class Device {
     //唯一id
     private String uuid;
 
+    public Device(String ip) {
+        super();
+        this.ip = ip;
+    }
     public Device(String ip, int port, String uuid) {
         super();
         this.ip = ip;
