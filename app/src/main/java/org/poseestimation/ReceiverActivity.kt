@@ -10,6 +10,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.Settings
+import android.util.Log
 import android.view.*
 import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
@@ -26,9 +27,12 @@ import org.poseestimation.layoutImpliment.SquareProgress
 import org.poseestimation.ml.ModelType
 import org.poseestimation.ml.MoveNet
 import org.poseestimation.socketconnect.Device
+import org.poseestimation.socketconnect.communication.host.Command
+import org.poseestimation.socketconnect.communication.host.CommandSender
 import org.poseestimation.socketconnect.communication.host.FrameDataReceiver
 import org.poseestimation.socketconnect.connectpopview.hostPopView
 import kotlin.concurrent.thread
+import kotlin.math.log
 
 class ReceiverActivity: AppCompatActivity() {
     companion object {
@@ -49,6 +53,7 @@ class ReceiverActivity: AppCompatActivity() {
     private var cameraReceiver: CameraReceiver? = null
     private val voice= org.poseestimation.utils.Voice(this)
     private var videoviewrepetend: VideoViewRepetend? =null
+    private var FrameReceiverConnectThread:Thread?=null
     private val requestPermissionLauncher =
         registerForActivityResult(
             ActivityResultContracts.RequestPermission()
@@ -60,6 +65,22 @@ class ReceiverActivity: AppCompatActivity() {
                     .show(supportFragmentManager, ReceiverActivity.FRAGMENT_DIALOG)
             }
         }
+    fun sendCommand(device: Device) {
+        //发送命令
+        val command = Command("sendFrame".toByteArray(), object : Command.Callback {
+            override fun onEcho(msg: String?) {
+            }
+            override fun onError(msg: String?) {
+            }
+            override fun onRequest(msg: String?) {
+            }
+            override fun onSuccess(msg: String?) {
+            }
+        })
+        command.setDestIp(device.ip)
+        CommandSender.addCommand(command)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_receiver)
@@ -113,7 +134,6 @@ class ReceiverActivity: AppCompatActivity() {
 
         initView()
         msquareProgress.setCurProgress(0);
-
         openCamera()
         createPoseEstimator()
 
@@ -200,6 +220,9 @@ class ReceiverActivity: AppCompatActivity() {
 //        hostpopView.dismiss()
         cameraReceiver?.close()
         FrameDataReceiver.close()
+        FrameReceiverConnectThread?.let{
+            it.interrupt()
+        }
     }
 
     // check if permission is granted or not.
@@ -233,14 +256,25 @@ class ReceiverActivity: AppCompatActivity() {
                         ExerciseSchedule.getTag(videoviewrepetend!!.index),
                         //*************************************************************
                         ExerciseSchedule.exerciseName.get(videoviewrepetend!!.index)).apply {
+                        FrameReceiverConnectThread?.let{
+                            it.interrupt()
+                        }
+                        FrameReceiverConnectThread=
                             thread{
-                                prepareCamera()
+                                try {
+                                    prepareCamera()
+                                }
+                                catch (e:InterruptedException)
+                                {
+                                    Log.d("old:","Interrupted")
+                                }
                             }
                         }
                         //*************************************************************
                 lifecycleScope.launch(Dispatchers.Main) {
                     cameraReceiver?.initCamera()
                 }
+                sendCommand(mainSlave!!)
             }
         }
     }

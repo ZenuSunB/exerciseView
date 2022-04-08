@@ -230,6 +230,7 @@ class CameraSender(
     // process image
     private fun processImage(bitmap: Bitmap,image:Image) {
         synchronized(lock) {
+
                 encoder.encoderH264(image)
 
                 frameProcessedInOneSecondInterval++

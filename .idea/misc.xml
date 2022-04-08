@@ -22,8 +22,10 @@
         <entry key="..\:/android_for_test/ExerciseView/app/src/main/res/layout/activity_sender.xml" value="0.1" />
         <entry key="..\:/android_for_test/ExerciseView/app/src/main/res/layout/bottom_sheet_layout.xml" value="0.21770833333333334" />
         <entry key="..\:/android_for_test/ExerciseView/app/src/main/res/layout/hostconnect_popview.xml" value="0.264" />
+        <entry key="..\:/android_for_test/ExerciseView/app/src/main/res/layout/list_item.xml" value="0.264" />
+        <entry key="..\:/android_for_test/ExerciseView/app/src/main/res/layout/mylist_item.xml" value="0.264" />
         <entry key="..\:/android_for_test/ExerciseView/app/src/main/res/layout/register_popview.xml" value="0.19153484395040615" />
-        <entry key="..\:/android_for_test/ExerciseView/app/src/main/res/layout/remote_camera_launcher.xml" value="0.264" />
+        <entry key="..\:/android_for_test/ExerciseView/app/src/main/res/layout/remote_camera_launcher.xml" value="0.2" />
         <entry key="..\:/android_for_test/ExerciseView/app/src/main/res/layout/slaveconnect_popview.xml" value="0.17015818725951262" />
       </map>
     </option>

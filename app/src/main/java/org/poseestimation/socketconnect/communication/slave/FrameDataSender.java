@@ -30,7 +30,7 @@ public class FrameDataSender  {
     private static ExecutorService executorService = Executors.newSingleThreadExecutor();
     private static Socket socket;
     private static DataOutputStream os;
-    public static boolean isOpen=false;
+    public static volatile boolean isOpen;
     public static void open(Device device)
     {
         try {
@@ -84,7 +84,7 @@ public class FrameDataSender  {
         @Override
         public void run() {
             try {
-                if(os!=null) {
+                if(os!=null&&isOpen) {
                     Log.d("Send", "Data:" + frameData.getSize());
                     os.write(frameData.getContent());
                     os.flush();

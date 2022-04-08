@@ -44,6 +44,7 @@ public class FrameDataReceiver {
     private static ServerSocket serverSocket;
     private static Socket socket;
     private static DataInputStream is;
+
     public static void open(FrameDataReceiver.FrameDataListener frameDataListener)
     {
         try {

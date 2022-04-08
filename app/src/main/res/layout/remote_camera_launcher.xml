@@ -19,13 +19,13 @@
             android:layout_height="100dp"
             android:src="@drawable/menu_bg" />
 
-        <Button
-            android:id="@+id/return_btn"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:layout_marginTop="60dp"
-            android:background="#00000000"
-            />
+<!--        <Button-->
+<!--            android:id="@+id/return_btn"-->
+<!--            android:layout_width="50dp"-->
+<!--            android:layout_height="50dp"-->
+<!--            android:layout_marginTop="60dp"-->
+<!--            android:background="#00000000"-->
+<!--            />-->
 
         <org.poseestimation.layoutImpliment.BackArrowView
             android:id="@+id/back_arrow"
@@ -103,6 +103,22 @@
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/text_body1" />
+
+    <TextView
+        android:id="@+id/text_body2"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="30dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginRight="40dp"
+        android:text="在下方选择需要连接的远程摄像头设备，点击连接"
+        android:textColor="#696969"
+        android:textSize="16dp"
+        android:textStyle="bold"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/text_Head12" />
+
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/frameLayout2"

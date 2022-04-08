@@ -37,8 +37,10 @@ public class DeviceSearcher {
 	 * 停止搜索
 	 */
 	public static void close() {
-		executorService.shutdownNow();
-		executorService=null;
+		if(executorService!=null) {
+			executorService.shutdownNow();
+			executorService = null;
+		}
 	}
 	public static interface OnSearchListener{
 		void onSearchStart();
