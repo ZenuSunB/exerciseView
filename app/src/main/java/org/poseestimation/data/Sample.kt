@@ -39,71 +39,63 @@ class Sample(
             when(i)
             {
                 0-> {
-                    bodyWeight[6] += samplevideoTendency[i].toDouble()
-                    bodyWeight[9] += samplevideoTendency[i].toDouble()
-                    bodyWeight[10] += samplevideoTendency[i].toDouble()
-                    sum+=3*samplevideoTendency[i].toDouble()
+                    bodyWeight[9] += samplevideoTendency[i].toDouble()/2
+                    bodyWeight[10] += samplevideoTendency[i].toDouble()/2
+                    sum+=samplevideoTendency[i].toDouble()
                 }
                 1-> {
-                    bodyWeight[6] += samplevideoTendency[i].toDouble()
-                    bodyWeight[9] += samplevideoTendency[i].toDouble()
-                    bodyWeight[10] += samplevideoTendency[i].toDouble()
-                    sum+=3*samplevideoTendency[i].toDouble()
+                    bodyWeight[9] += samplevideoTendency[i].toDouble()/2
+                    bodyWeight[10] += samplevideoTendency[i].toDouble()/2
+                    sum+=samplevideoTendency[i].toDouble()
                 }
                 2-> {
                     bodyWeight[6] += samplevideoTendency[i].toDouble()
-                    bodyWeight[6] += samplevideoTendency[i].toDouble()
-                    sum+=2*samplevideoTendency[i].toDouble()
+                    sum+=samplevideoTendency[i].toDouble()
                 }
                 3-> {
                     bodyWeight[1] += samplevideoTendency[i].toDouble()
                     bodyWeight[2] += samplevideoTendency[i].toDouble()
-                    bodyWeight[1] += samplevideoTendency[i].toDouble()
-                    bodyWeight[2] += samplevideoTendency[i].toDouble()
-                    sum+=4*samplevideoTendency[i].toDouble()
+                    sum+=2*samplevideoTendency[i].toDouble()
                 }
                 4-> {
-                    bodyWeight[5] += samplevideoTendency[i].toDouble()
-                    bodyWeight[9] += samplevideoTendency[i].toDouble()
-                    bodyWeight[10] += samplevideoTendency[i].toDouble()
-                    sum+=3*samplevideoTendency[i].toDouble()
+                    bodyWeight[5] += samplevideoTendency[i].toDouble()/2
+                    sum+=0.5*samplevideoTendency[i].toDouble()
                 }
                 5-> {
-                    bodyWeight[5] += samplevideoTendency[i].toDouble()
-                    bodyWeight[5] += samplevideoTendency[i].toDouble()
-                    sum+=2*samplevideoTendency[i].toDouble()
+                    bodyWeight[5] += samplevideoTendency[i].toDouble()/2
+                    sum+=0.5*samplevideoTendency[i].toDouble()
                 }
                 6-> {
-                    bodyWeight[5] += samplevideoTendency[i].toDouble()
-                    bodyWeight[5] += samplevideoTendency[i].toDouble()
-                    sum+=2*samplevideoTendency[i].toDouble()
+//                    bodyWeight[5] += samplevideoTendency[i].toDouble()
+                    bodyWeight[3] += samplevideoTendency[i].toDouble()/2
+                    bodyWeight[4] += samplevideoTendency[i].toDouble()/2
+                    sum+=samplevideoTendency[i].toDouble()
                 }
                 7-> {
-                    bodyWeight[2] += samplevideoTendency[i].toDouble()
-                    bodyWeight[2] += samplevideoTendency[i].toDouble()
-                    bodyWeight[3] += samplevideoTendency[i].toDouble()
-                    bodyWeight[3] += samplevideoTendency[i].toDouble()
-                    sum+=4*samplevideoTendency[i].toDouble()
+                    bodyWeight[3] += samplevideoTendency[i].toDouble()/2
+                    bodyWeight[4] += samplevideoTendency[i].toDouble()/2
+                    sum+=samplevideoTendency[i].toDouble()
                 }
                 8-> {
-                    bodyWeight[0] += samplevideoTendency[i].toDouble()
-                    bodyWeight[1] += samplevideoTendency[i].toDouble()
-                    bodyWeight[2] += samplevideoTendency[i].toDouble()
-                    bodyWeight[3] += samplevideoTendency[i].toDouble()
-                    bodyWeight[4] += samplevideoTendency[i].toDouble()
-                    bodyWeight[5] += samplevideoTendency[i].toDouble()
-                    bodyWeight[6] += samplevideoTendency[i].toDouble()
-                    bodyWeight[7] += samplevideoTendency[i].toDouble()
-                    bodyWeight[8] += samplevideoTendency[i].toDouble()
-                    bodyWeight[9] += samplevideoTendency[i].toDouble()
-                    bodyWeight[10] += samplevideoTendency[i].toDouble()
-                    sum+=11*samplevideoTendency[i].toDouble()
+                    bodyWeight[0] += samplevideoTendency[i].toDouble()/5
+                    bodyWeight[1] += samplevideoTendency[i].toDouble()/5
+                    bodyWeight[2] += samplevideoTendency[i].toDouble()/5
+                    bodyWeight[3] += samplevideoTendency[i].toDouble()/5
+                    bodyWeight[4] += samplevideoTendency[i].toDouble()/5
+                    bodyWeight[5] += samplevideoTendency[i].toDouble()/5
+                    bodyWeight[6] += samplevideoTendency[i].toDouble()/5
+                    bodyWeight[7] += samplevideoTendency[i].toDouble()/5
+                    bodyWeight[8] += samplevideoTendency[i].toDouble()/5
+                    bodyWeight[9] += samplevideoTendency[i].toDouble()/5
+                    bodyWeight[10] += samplevideoTendency[i].toDouble()/5
+                    sum+=(11/5)*samplevideoTendency[i].toDouble()
                 }
 
             }
 
         }
-        for(i in 0..bodyWeight.count()-1) {
+        for(i in 0..bodyWeight.count()-1)
+        {
             bodyWeight[i]=bodyWeight[i]/sum
         }
 
@@ -133,9 +125,17 @@ class Sample(
         totalScore=50.0
     }
 
-    public fun getPersonNow(): List<Person>
+    public fun getPersonNow(x:Double,y:Double): List<Person>
     {
-        return listOf(samplePersonsList!!.get(count))
+        var res=samplePersonsList!!.get(count)
+        val x_bias=res.keyPoints[0].coordinate.x-x
+        val y_bias=res.keyPoints[0].coordinate.y-y
+        for(i in 0..res.keyPoints.count()-1)
+        {
+            res.keyPoints[i].coordinate.x-=x_bias.toFloat()
+            res.keyPoints[i].coordinate.y-=y_bias.toFloat()
+        }
+        return listOf(res)
     }
 
     public fun exec(usrPersonsList:List<Person>):Triple<Double, MutableList<Double>, Matrix> {

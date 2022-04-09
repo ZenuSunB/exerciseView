@@ -94,6 +94,16 @@ class MainActivity :AppCompatActivity() {
 
         val mainActivity=this
         val JsonMeg="{\n" +
+                "    \"id\": 5,\n"+
+                "    \"data\": [\n" +
+                "        {\n" +
+                "            \"id\": 24,\n" +
+                "            \"url\": \"sample24\",\n" +
+                "            \"groups\": \"2\"\n" +
+                "        }]}"
+
+/*
+        ="{\n" +
                 "    \"id\": 1,\n"+
                 "    \"data\": [\n" +
                 "        {\n" +
@@ -106,6 +116,7 @@ class MainActivity :AppCompatActivity() {
                 "            \"url\": \"sample7\",\n" +
                 "            \"groups\": \"2\"\n" +
                 "        }]}"
+*/
 
         videoviewrepetend= VideoViewRepetend(JsonMeg,this,videoView,countdownView,countdownViewFramLayout,this.baseContext,object:VideoViewRepetend.VideoViewRepetendListener{
             override fun onExerciseEnd(index:Int,samplevideoName:String,samplevideoTendency:MutableList<Int>,id:Int) {

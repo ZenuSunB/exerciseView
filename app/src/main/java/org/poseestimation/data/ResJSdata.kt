@@ -60,12 +60,16 @@ class ResJSdata(private var sampleId:Int=-1) {
             exerciseIntensity.add(Vectorslist.get(i).minus(Vectorslist.get(i-1)).norm2())
         }
         val ExerciseTendency=ExerciseSchedule.getTendency(sampleId)
+
         var first:Int=0
         var firstV:Double=0.0
+
         var second:Int=0
         var secondV:Double=0.0
+
         var third:Int=0
         var thirdV:Double=0.0
+
         for(i in 0..10)
         {
             if(ExerciseTendency[i]>=firstV)
@@ -92,6 +96,7 @@ class ResJSdata(private var sampleId:Int=-1) {
                 thirdV=ExerciseTendency[i]
             }
         }
+        println("++++++"+first+" "+second+" "+third)
         val tool=DataTypeTransfor()
         dtwres=DTWprocess().exec_Jama(
             tool.mergin_Jama(arrayListOf(
@@ -130,12 +135,17 @@ class ResJSdata(private var sampleId:Int=-1) {
             9 to "躯干左侧",
             10 to "躯干右侧")
         val ExerciseTendency=ExerciseSchedule.getTendency(sampleId)
+
         var first:Int=0
         var firstV:Double=0.0
+
         var second:Int=0
         var secondV:Double=0.0
+
         var third:Int=0
         var thirdV:Double=0.0
+
+
         for(i in 0..10)
         {
             if(ExerciseTendency[i]>=firstV)

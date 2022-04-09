@@ -111,6 +111,7 @@ class DTWprocess {
 
         //DTW开始计算
         for(i in 1..M-1)
+
         {
             var j_begin:Int=listOf(1,i-10000).maxOrNull()!!
             var j_end:Int=listOf(N,i+10000).minOrNull()!!
