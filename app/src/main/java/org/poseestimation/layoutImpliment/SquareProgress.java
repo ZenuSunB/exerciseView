@@ -42,7 +42,7 @@ public class SquareProgress extends View {
 
     private String TAG = "SquareProgress";
     //各个画笔的颜色
-    private int maxColor = Color.GRAY;//总进度条颜色为灰色
+    private int maxColor = Color.rgb(0,0,0);//总进度条颜色为灰色
     private int curColor = Color.GREEN;//当前进度条颜色为蓝色
     private int dotColor = Color.RED;//进度条前端的小圆点为红色
     private float allLength;//进度条的总长度
@@ -67,6 +67,7 @@ public class SquareProgress extends View {
     public SquareProgress(Context context) {
         super(context);
         initView();
+
     }
 
     public SquareProgress(Context context, AttributeSet attrs) {

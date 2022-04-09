@@ -20,6 +20,7 @@ import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.poseestimation.camera.CameraSender
+import org.poseestimation.socketconnect.Device
 
 import org.poseestimation.socketconnect.communication.slave.CommandReceiver
 import org.poseestimation.socketconnect.communication.slave.FrameDataSender
@@ -30,12 +31,11 @@ import kotlin.concurrent.thread
 class SenderActivity :AppCompatActivity() {
     companion object {
         private const val FRAGMENT_DIALOG = "dialog"
+        public var mainHost: Device?=null
     }
     /** A [SurfaceView] for camera preview.   */
     private lateinit var surfaceView: SurfaceView
-    private lateinit var slavepopView: slavePopView
     private var cameraSender: CameraSender? = null
-    private var isResponseOpen:Boolean=false
     private val requestPermissionLauncher =
         registerForActivityResult(
             ActivityResultContracts.RequestPermission()
@@ -51,53 +51,19 @@ class SenderActivity :AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_sender)
+        var bundle=intent.getExtras()
+        mainHost =Device(bundle!!.getString("hostIp"))
         // keep screen on while app is running
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-
         surfaceView = findViewById(R.id.surfaceView)
-
         if (!isCameraPermissionGranted()) {
             requestPermission()
         }
-
-        findViewById<CoordinatorLayout>(R.id.main_layout).post{
-            //创建popview进行局域网应答
-            slavepopView=slavePopView(this)
-            slavepopView.CreateRegisterPopWindow(this,View.OnClickListener {
-                if(isResponseOpen)
-                {
-                    //停在响应搜索
-                    slavepopView.stopListen()
-                    isResponseOpen=false
-                    slavepopView.btnResponseOpen.setText("打开应答")
-                    //停止接受通信命令
-                    CommandReceiver.close()
-                    Toast.makeText(this, "已经关闭响应", Toast.LENGTH_SHORT).show()
-                    cameraSender?.close()
-                    cameraSender=null
-                }
-                else{
-                    //开始响应搜索
-                    slavepopView.startListen()
-                    isResponseOpen=true
-
-                    slavepopView.btnResponseOpen.setText("关闭应答")
-                    //开始接受通信命令
-                    CommandReceiver.open(object : CommandReceiver.CommandListener{
-                        override fun onReceive(command: String?) {
-                            commandResolver(command)
-                        }
-                    })
-                    Toast.makeText(baseContext, "已经打开响应程序！", Toast.LENGTH_SHORT).show()
-                }
-            })
-            slavepopView.showAtLocation(
-                findViewById<CoordinatorLayout>(R.id.main_layout),
-                Gravity.CENTER,
-                0,
-                0
-            )
+        thread {
+            FrameDataSender.open(mainHost)
         }
+        openCamera()
+
 
     }
 
@@ -114,7 +80,7 @@ class SenderActivity :AppCompatActivity() {
 
     override fun onStop() {
         super.onStop()
-        slavepopView.dismiss()
+//        slavepopView.dismiss()
         cameraSender?.close()
         FrameDataSender.close()
     }
@@ -139,25 +105,6 @@ class SenderActivity :AppCompatActivity() {
                 lifecycleScope.launch(Dispatchers.Main) {
                     cameraSender?.initCamera()
                 }
-            }
-        }
-    }
-
-    private fun commandResolver(demand:String?)
-    {
-        when(demand)
-        {
-            "openCamera"->{
-                openCamera()
-            }
-            "sendFrame"->{
-                SystemClock.sleep(80)
-                cameraSender?.let {
-                    FrameDataSender.open(slavePopView.hostDevice)
-                }
-            }
-            null->{
-
             }
         }
     }

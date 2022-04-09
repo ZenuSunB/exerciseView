@@ -66,40 +66,7 @@ class EncoderH264(
 
         mediaCodec.configure(mediaFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
 
-//        mediaCodec.setCallback(object :MediaCodec.Callback(){
-//            override fun onError(p0: MediaCodec, p1: MediaCodec.CodecException) {
-//
-//            }
-//
-//            override fun onInputBufferAvailable(p0: MediaCodec, index: Int) {
-//                //拿到输入缓冲区,用于传送数据进行编码
-//                val tempFrame=getFrame()
-//                tempFrame?.let{
-//                    var nv21=getDataFromImage(it,COLOR_FormatNV21)
-//                    var nv12 = NV21ToNv12(nv21, width, height)
-//                    var inputBuffer: ByteBuffer? = mediaCodec.getInputBuffer(index)
-//                    inputBuffer?.clear();
-//                    inputBuffer?.put(nv12)
-//                    mediaCodec.queueInputBuffer(index,0,nv12.count(),System.nanoTime(),0)
-//                }
-//
-//            }
-//            override fun onOutputBufferAvailable(
-//                p0: MediaCodec,
-//                index: Int,
-//                info: MediaCodec.BufferInfo
-//            ) {
-//                var outputBuffer:ByteBuffer?  = mediaCodec.getOutputBuffer(index);
-//                val bufferFormat: MediaFormat = mediaCodec.getOutputFormat(index)
-//                var outData = ByteArray(info.size)
-//                outputBuffer?.get(outData);
-//                listener?.h264(outData)
-//                mediaCodec.releaseOutputBuffer(index,false);
-//            }
-//            override fun onOutputFormatChanged(p0: MediaCodec, p1: MediaFormat) {
-//
-//            }
-//        })
+
         //开始编码
         mediaCodec.start()
     }
@@ -107,7 +74,7 @@ class EncoderH264(
     public fun encoderH264(image: Image) {
         synchronized(Any())
         {
-            index++;
+            index++
             var nv21 = getDataFromImage(image, COLOR_FormatNV21)
             var nv12 = NV21ToNv12(nv21, width, height)
             //拿到输入缓冲区,用于传送数据进行编码

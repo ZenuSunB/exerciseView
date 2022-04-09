@@ -3,6 +3,7 @@ package org.poseestimation
 import android.Manifest
 import android.app.AlertDialog
 import android.app.Dialog
+import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -21,6 +22,8 @@ import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.json.JSONArray
+import org.json.JSONObject
 import org.poseestimation.camera.CameraReceiver
 import org.poseestimation.data.*
 import org.poseestimation.layoutImpliment.SquareProgress
@@ -30,7 +33,9 @@ import org.poseestimation.socketconnect.Device
 import org.poseestimation.socketconnect.communication.host.Command
 import org.poseestimation.socketconnect.communication.host.CommandSender
 import org.poseestimation.socketconnect.communication.host.FrameDataReceiver
+import org.poseestimation.socketconnect.communication.slave.FrameDataSender
 import org.poseestimation.socketconnect.connectpopview.hostPopView
+import java.io.FileOutputStream
 import kotlin.concurrent.thread
 import kotlin.math.log
 
@@ -95,33 +100,6 @@ class ReceiverActivity: AppCompatActivity() {
         videoView = findViewById(R.id.videoView)
         countdownViewFramLayout=findViewById(R.id.countDownViewLayout)
 
-//        findViewById<CoordinatorLayout>(R.id.main_layout).post {
-//            //创建popview进行局域网搜索
-//            hostpopView = hostPopView()
-//            hostpopView.CreateRegisterPopWindow(this, View.OnClickListener {
-//                if (isSearchDeviceOpen) {
-//                    //设备搜索已关闭
-//                    hostpopView.clear()
-//                    hostpopView.stopSearch()
-//                    isSearchDeviceOpen = false
-//                    hostpopView.btnSearchDeviceOpen.setText("开始搜索局域网下的设备")
-//                    Toast.makeText(this, "设备搜索已关闭", Toast.LENGTH_SHORT).show()
-//
-//                } else {
-//                    //设备搜索开始
-//                    isSearchDeviceOpen = true
-//                    hostpopView.btnSearchDeviceOpen.setText("设备搜索关闭")
-//                    Toast.makeText(this, "设备搜索开始", Toast.LENGTH_SHORT).show()
-//                    hostpopView.startSearch()
-//                }
-//            })
-//            hostpopView.showAtLocation(
-//                this.findViewById(R.id.main_layout),
-//                Gravity.CENTER,
-//                0,
-//                0
-//            )
-//        }
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R ||
             Environment.isExternalStorageManager()) {
@@ -139,6 +117,7 @@ class ReceiverActivity: AppCompatActivity() {
 
     }
     private fun initView(){
+
         val mainActivity=this
         val JsonMeg="{\n" +
                 "    \"id\": 1,\n"+
@@ -155,27 +134,31 @@ class ReceiverActivity: AppCompatActivity() {
                 "        }]}"
 
         videoviewrepetend= VideoViewRepetend(JsonMeg,this,videoView,countdownView,countdownViewFramLayout,this.baseContext,object:VideoViewRepetend.VideoViewRepetendListener{
-            override fun onExerciseEnd(index:Int,samplevideoName:String,samplevideoTendency:MutableList<Int>) {
+            override fun onExerciseEnd(index:Int,samplevideoName:String,samplevideoTendency:MutableList<Int>,id:Int) {
                 //一轮运动完成，开始创建下一轮运动的数据结构
                 //休息阶段时关闭图像处理
                 cameraReceiver!!.setProcessImageFlag(false)
                 //创建新一轮运动数据结构
-                cameraReceiver!!.Samples.add(Sample(samplevideoName+".processed.json",baseContext,index,samplevideoTendency,object:
-                    Sample.scorelistener{
+                cameraReceiver!!.Samples.add(Sample(samplevideoName+".processed.json",baseContext,id,samplevideoTendency,object:Sample.scorelistener{
                     override fun onFrameScoreHeight(FrameScore: Int,part:Int) {
                         voice.voicePraise(FrameScore,part)
                     }
                     override fun onFrameScoreLow(FrameScore: Int,part:Int) {
                         voice.voiceRemind(FrameScore,part)
                     }
+                    override fun onPersonNotDect() {
+                        voice.voiceTips()
+                    }
                 }))
 
                 thread {
-                    cameraReceiver!!.Users.get(index-1).writeTofile("test", cameraReceiver!!.Samples[index-1].getSampleVecList(),baseContext)
+                    cameraReceiver!!.Users.get(index - 1).exec()
+                    cameraReceiver!!.Users.get(index - 1).toJson()
+//                  cameraSource!!.Users.get(index-1).writeTofile("test", cameraSource!!.Samples[index-1].getSampleVecList(),baseContext)
                 }
 
                 //创建新的用户数据收集器
-                cameraReceiver!!.Users.add(ResJSdata(index))
+                cameraReceiver!!.Users.add(ResJSdata(id))
 
                 //更新came索引，使其图像处理绑定到下一轮运动的数据结构中
                 cameraReceiver!!.index++
@@ -189,11 +172,25 @@ class ReceiverActivity: AppCompatActivity() {
                 //退出前关闭图像处理
                 cameraReceiver!!.setProcessImageFlag(false)
                 thread {
-                    cameraReceiver!!.Users.get(index - 1).writeTofile(
-                        "test",
-                        cameraReceiver!!.Samples[index - 1].getSampleVecList(),
-                        baseContext
-                    )
+//                    cameraSource!!.Users.get(index - 1).writeTofile(
+//                        "test",
+//                        cameraSource!!.Samples[index - 1].getSampleVecList(),
+//                        baseContext
+//                    )
+                    cameraReceiver!!.Users.get(index - 1).exec()
+                    cameraReceiver!!.Users.get(index - 1).toJson()
+                    var TotalReturnData: JSONObject = JSONObject()
+                    var TotalReturnValue: JSONArray = JSONArray()
+                    for(i in 0..index-1)
+                    {
+                        var LineReturnValue= JSONObject()
+                        LineReturnValue.put("id",cameraReceiver!!.Samples.get(i).getId())
+                        LineReturnValue.put("data",cameraReceiver!!.Users.get(i).getJsonData())
+                        TotalReturnValue.put(LineReturnValue)
+                    }
+                    TotalReturnData.put("id",ExerciseSchedule.getTotalId())
+                    TotalReturnData.put("data",TotalReturnValue)
+                    writeTofile("test",TotalReturnData.toString())
                 }
                 cameraReceiver!!.index++
             }
@@ -209,7 +206,6 @@ class ReceiverActivity: AppCompatActivity() {
     override fun onPause() {
         cameraReceiver?.pause()
 //        videoviewrepetend?.videoView?.pause()
-//        hostpopView.dismiss()
         cameraReceiver?.close()
         FrameDataReceiver.close()
         super.onPause()
@@ -253,9 +249,11 @@ class ReceiverActivity: AppCompatActivity() {
                     },this.baseContext,
                         this,
                         //*************************************************************
-                        ExerciseSchedule.getTag(videoviewrepetend!!.index),
+                        ExerciseSchedule.getTagByIndex(videoviewrepetend!!.index),
                         //*************************************************************
-                        ExerciseSchedule.exerciseName.get(videoviewrepetend!!.index)).apply {
+                        ExerciseSchedule.getName(videoviewrepetend!!.index),
+                        //*************************************************************
+                        ExerciseSchedule.getId(0)).apply {
                         FrameReceiverConnectThread?.let{
                             it.interrupt()
                         }
@@ -327,7 +325,14 @@ class ReceiverActivity: AppCompatActivity() {
     private fun showToast(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_LONG).show()
     }
-
+    private fun writeTofile(filename:String, Jsondata:String)
+    {
+        var path=filename+".txt"
+        var fos: FileOutputStream = baseContext.openFileOutput(path, Context.MODE_PRIVATE)
+        fos.write(Jsondata.toByteArray());
+        fos.flush();
+        fos.close();
+    }
     class ErrorDialog : DialogFragment() {
 
         override fun onCreateDialog(savedInstanceState: Bundle?): Dialog =

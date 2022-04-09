@@ -9,6 +9,8 @@ import android.widget.FrameLayout
 import android.widget.VideoView
 import androidx.constraintlayout.widget.Constraints
 import androidx.coordinatorlayout.widget.CoordinatorLayout
+import org.poseestimation.utils.Voice
+import java.util.*
 
 
 class VideoViewRepetend(
@@ -35,7 +37,7 @@ class VideoViewRepetend(
             countDountMp?.release();
         }
     }
-    lateinit var voicePlayer:MediaPlayer
+    var voice:Voice=org.poseestimation.utils.Voice(context)
     //记录下当前播放到那哪一组运动视频
     public var index=0
     init {
@@ -53,7 +55,6 @@ class VideoViewRepetend(
         {
             countDownShow()
         }
-        setVoice()
         setVideoView()
         countDountMp?.setOnCompletionListener{
             //隐藏倒计时VIEW
@@ -72,7 +73,8 @@ class VideoViewRepetend(
                     listener?.onExerciseEnd(
                         index,
                         ExerciseSchedule.getName(index),
-                        ExerciseSchedule.getTag(index)
+                        ExerciseSchedule.getTagByIndex(index),
+                        ExerciseSchedule.getId(index)
                     )
                     //运动结束触发，进入休息视频
                     val reVideoId = context.resources.getIdentifier("relaxtimer","raw", context.getPackageName() )
@@ -85,6 +87,7 @@ class VideoViewRepetend(
                         setPlayVideo()
                     }
                     countDountMp?.start()
+                    voice?.voiceRest()
                 }
                 else
                 {
@@ -101,28 +104,18 @@ class VideoViewRepetend(
     }
     public fun start()
     {
-        voicePlayer.start()
+        voice.voiceCountDown()
         countDountMp?.start()
         mainActivity.runOnUiThread(java.lang.Runnable {
             countDownShow()
         })
-    }
-    private fun setVoice()
-    {
-        //播放倒计时提示声音
-        val fd = context.assets.openFd("voice/countdown/5countdown.mp3");
-        voicePlayer=MediaPlayer()
-        voicePlayer.setDataSource(fd)
-        voicePlayer.prepare()
-        voicePlayer.setOnCompletionListener {
-            it.release()
-        }
     }
     private fun setCountView(srcId:Int)
     {
         countDountMp?.release()
         countDountMp=null
         countDountMp=MediaPlayer.create(context,srcId)
+
         countDountMp?.setVideoScalingMode(MediaPlayer.VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING);
         countDountMp?.setOnPreparedListener(object:MediaPlayer.OnPreparedListener{
             override fun onPrepared(p0: MediaPlayer?) {
@@ -132,13 +125,12 @@ class VideoViewRepetend(
                 {
                     val ratio:Double=p0!!.videoHeight.toDouble()/p0!!.videoWidth.toDouble()
                     var mp=FrameLayout.LayoutParams(screenWidth,(screenWidth.toDouble()*ratio).toInt())
-
-
+                    mp.gravity= Gravity.CENTER
+                    countdownView.layoutParams=mp
                 }
                 else
                 {
                     val ratio:Double=p0!!.videoWidth.toDouble()/p0!!.videoHeight.toDouble()
-
                     var mp=FrameLayout.LayoutParams((screenHeight.toDouble()*ratio).toInt(),screenHeight)
                     mp.gravity= Gravity.CENTER
                     countdownView.layoutParams=mp
@@ -146,6 +138,7 @@ class VideoViewRepetend(
 
             }
         })
+        countDountMp?.setVolume(0.4f, 0.4f)
         countdownView.holder.addCallback(surfaceHolder)
 
     }
@@ -167,9 +160,10 @@ class VideoViewRepetend(
         countdownView.visibility = View.INVISIBLE
         countdownViewFramLayout.visibility= View.INVISIBLE
     }
+
     interface VideoViewRepetendListener {
         fun onExerciseStart(index:Int,samplevideoName:String)
-        fun onExerciseEnd(index:Int,samplevideoName:String,samplevideoTendency:MutableList<Int>)
+        fun onExerciseEnd(index:Int,samplevideoName:String,samplevideoTendency:MutableList<Int>,id:Int)
         fun onExerciseFinish(index:Int)
     }
 }

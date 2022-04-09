@@ -23,9 +23,10 @@ class DTWprocess {
 //__________________________________jama__________________________________
 
     //余弦距离!!!!!!!!!!!这里用到了一些jblas库内容,可能出错!!!!!!!!!!!!!!!!!!!!!!
-    fun cosine_point_distance_Jama(X:Matrix,Y:Matrix):Double
+    fun cosine_point_distance_Jama(X:Matrix,Y:Matrix):Pair<Double,Double>
     {
-        var dis:Double=0.0.toDouble()
+        var true_dis:Double=0.0.toDouble()
+        var fake_dis:Double=0.0.toDouble()
         val dimension:Int=X.rowDimension
 
         //归一化&&缺陷值NaN处理
@@ -33,8 +34,9 @@ class DTWprocess {
         var Y_norm:DoubleMatrix= DoubleMatrix(dimension,num_dimension)
         for(i in 0..dimension-1)
         {
-            if(!isNaN(X[i, 0]) &&!isNaN(X[i, 1]) &&!isNaN(Y[i, 1]) &&!isNaN(Y[i, 1]))
+            if(!isNaN(X[i, 0]) &&!isNaN(X[i, 1]) &&!isNaN(Y[i, 0]) &&!isNaN(Y[i, 1]))
             {
+
                 if(X.getMatrix(i,i,0,num_dimension-1).norm2()!=0.0)
                 {
                     X_norm.put(i,0,X[i,0]/X.getMatrix(i,i,0,num_dimension-1).norm2())
@@ -58,20 +60,25 @@ class DTWprocess {
         {
             if(!isNaN(X_norm[i, 0]) &&!isNaN(X_norm[i, 1]) &&!isNaN(Y_norm[i, 0]) &&!isNaN(Y_norm[i, 1]))
             {
+                true_dis+=X_norm[i,0]*Y_norm[i,0]+X_norm[i,1]*Y_norm[i,1]
                 if(X_norm[i,0]*Y_norm[i,0]+X_norm[i,1]*Y_norm[i,1]> sqrt(3.0) /2)
-                    dis+=1
+                    fake_dis+=1
                 else if(X_norm[i,0]*Y_norm[i,0]+X_norm[i,1]*Y_norm[i,1]> sqrt(2.0) /2)
-                    dis+=0
+                    fake_dis+=0
                 else
-                    dis+=-1
+                    fake_dis+=-1
             }
             else//如果缺失，则认为缺失
             {
-                dis+=0
+                true_dis+=0
+                fake_dis+=0
             }
         }
-        //dis+dimension)*(dis+dimension)*100/(2*dimension*2*dimension)
-        return (dis+dimension)*(dis+dimension)*100/(2*dimension*2*dimension)
+        //(dis+dimension)*(dis+dimension)*100/(2*dimension*2*dimension)
+        return Pair<Double,Double>(
+            (fake_dis+dimension)*(fake_dis+dimension)*100/(2*dimension*2*dimension),
+            (true_dis+dimension)*100/(2*dimension)
+        )
     }
 
 
@@ -89,16 +96,16 @@ class DTWprocess {
         //进行动态规化运算的矩阵&&cost的初始化
         var cost:DoubleMatrix = DoubleMatrix(M,N)
         cost.put(0,0,
-            cosine_point_distance_Jama(userPointsList[0], samplePointsList[0]))
+            cosine_point_distance_Jama(userPointsList[0], samplePointsList[0]).second)
         for(i in 1..M-1)
         {
             cost.put(i,0,
-                cost[i-1,0]+cosine_point_distance_Jama(userPointsList[i], samplePointsList[0]))
+                cost[i-1,0]+cosine_point_distance_Jama(userPointsList[i], samplePointsList[0]).second)
         }
         for(j in 1..N-1)
         {
             cost.put(0,j,
-                cost[0,j-1]+cosine_point_distance_Jama(userPointsList[0], samplePointsList[j]))
+                cost[0,j-1]+cosine_point_distance_Jama(userPointsList[0], samplePointsList[j]).second)
         }
         //END
 
@@ -110,7 +117,7 @@ class DTWprocess {
             for(j in j_begin..j_end-1)
             {
                 val choices=listOf(cost[i-1,j-1],cost[i,j-1], cost[i-1,j])
-                val choiced:Double =choices.minOrNull()!!
+                val choiced:Double =choices.maxOrNull()!!
                 if (choiced == cost[i - 1,j - 1]) {
                     path_matrix[i][j][0] = i-1
                     path_matrix[i][j][1] = j-1
@@ -124,7 +131,7 @@ class DTWprocess {
                     path_matrix[i][j][1] = j
                 }
                 cost.put(i,j,
-                    choiced+cosine_point_distance_Jama(userPointsList[i], samplePointsList[j]))
+                    choiced+cosine_point_distance_Jama(userPointsList[i], samplePointsList[j]).second)
 
             }
         }

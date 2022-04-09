@@ -193,7 +193,7 @@ class DataTypeTransfor {
     }
 
     //按部位分割
-    fun divide_Jama(posVecList:List<Matrix>,Type:BoneVectorPart):List<Matrix>
+    fun divide_Jama(posVecList:List<Matrix>,Type:BoneVectorPart):MutableList<Matrix>
     {
         var partialposVecList:MutableList<Matrix> = arrayListOf<Matrix>()
         var choocedPart:MutableList<Int> = arrayListOf<Int>()
@@ -255,7 +255,37 @@ class DataTypeTransfor {
         return partialposVecList
     }
 
+    //合并jamalist
+    fun mergin_Jama(JamaListList:MutableList<MutableList<Matrix>>):MutableList<Matrix>
+    {
+        var res:MutableList<Matrix> = arrayListOf()
+        var newRows=0;
 
+        for(i in 0..JamaListList.count()-1)
+        {
+            JamaListList[i][0]?.let {
+                newRows+=it.rowDimension
+            }
+        }
+
+        for(i in 0..JamaListList[0].count()-1)
+        {
+            var newMatrix=Matrix(newRows,num_dimension)
+            var cnt=0;
+            for(j in 0..JamaListList.count()-1)
+            {
+                for(r in 0..JamaListList[j][i].rowDimension-1)
+                {
+                    newMatrix.setMatrix(cnt, cnt, 0, num_dimension - 1,
+                        JamaListList[j][i].getMatrix(r,r,0,num_dimension-1))
+                    cnt++;
+                }
+            }
+            res.add(newMatrix)
+        }
+
+        return res
+    }
 
 
 }

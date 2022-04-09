@@ -47,10 +47,7 @@ import org.poseestimation.ml.PoseDetector
 import org.poseestimation.utils.BoneVectorPart
 import org.poseestimation.utils.DTWprocess
 import org.poseestimation.utils.Voice
-import java.io.BufferedReader
-import java.io.InputStream
-import java.io.InputStreamReader
-import java.io.Reader
+import java.io.*
 import java.util.*
 import kotlin.random.Random
 
@@ -61,7 +58,8 @@ class CameraSource(
     private val context: Context,
     private val mainActivity: Activity,
     private val firstSamplevideoTendency :MutableList<Int>,
-    private val firstSamplevideoName :String
+    private val firstSamplevideoName :String,
+    private val firstSamplevideoId:Int
 ) {
 
     companion object {
@@ -127,15 +125,18 @@ class CameraSource(
     suspend fun initCamera() {
         camera = openCamera(cameraManager, cameraId)
 
-        Samples.add(Sample(firstSamplevideoName+".processed.json",context,1,firstSamplevideoTendency,object:Sample.scorelistener{
+        Samples.add(Sample(firstSamplevideoName+".processed.json",context,firstSamplevideoId,firstSamplevideoTendency,object:Sample.scorelistener{
             override fun onFrameScoreHeight(FrameScore: Int,part:Int) {
                 voice.voicePraise(FrameScore,part)
             }
             override fun onFrameScoreLow(FrameScore: Int,part:Int) {
                 voice.voiceRemind(FrameScore,part)
             }
+            override fun onPersonNotDect() {
+                voice.voiceTips()
+            }
         }))
-        Users.add(ResJSdata(0))
+        Users.add(ResJSdata(firstSamplevideoId))
 
         imageReader =
             ImageReader.newInstance(PREVIEW_WIDTH, PREVIEW_HEIGHT, ImageFormat.YUV_420_888, 3)
@@ -232,11 +233,10 @@ class CameraSource(
 
     fun pause()
     {
-//        session?.stopRepeating()
+        session?.stopRepeating()
     }
 
     fun resume() {
-
         imageReaderThread = HandlerThread("imageReaderThread").apply { start() }
         imageReaderHandler = Handler(imageReaderThread!!.looper)
         fpsTimer = Timer()
@@ -295,7 +295,8 @@ class CameraSource(
                         scoreBypart = S.second
                         uservector = S.third
                     }
-                    Users[index].append(scoreBypart, uservector)
+                    if(Samples[index].getClock()%5==0)
+                        Users[index].append(scoreBypart, uservector,Samples[index].getSampleVectorNow())
                     listener?.onImageprocessListener(score.toInt())
                 }
                 frameProcessedInOneSecondInterval++
@@ -306,11 +307,10 @@ class CameraSource(
             }
             else if (isPersonDetect == false) {
                     detector?.estimatePoses(bitmap)?.let {
-                        if (it.get(0).isTrust()) {
-                            if(Samples[index].tryFirstFrame(it)>=97) {
-                                isPersonDetect = true
-                                listener?.onPersonDetected()
-                            }
+                        if (Samples[index].tryFirstFrame(it)>=97&&it.get(0).isTrustMoreSerious())
+                        {
+                            isPersonDetect = true
+                            listener?.onPersonDetected()
                         }
                 }
             }
@@ -385,7 +385,6 @@ class CameraSource(
         isImageprocess=flag
         return isImageprocess
     }
-
 
 
 }

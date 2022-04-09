@@ -21,6 +21,7 @@ class Sample(
     private lateinit var  sampleVectorsList: List<Matrix>
     private lateinit var  samplePersonsList: List<Person>
     var count=-1
+    var countForDect=-1
     var totalScore=50.0
     var bodyWeight:MutableList<Double> = arrayListOf(0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0)
     var voiceMap:MutableList<Int> = arrayListOf(0,1,2,3,4,5,6,7,7,8,8)
@@ -107,17 +108,22 @@ class Sample(
         }
 
     }
-
+    public fun getSampleVectorNow():Matrix
+    {
+        return sampleVectorsList[count]
+    }
 
     public fun clock():Int
     {
         if(++count>=sampleKeypointsList.count())
         {
-            count=0
+            count=sampleKeypointsList.count()-1
         }
         return count
     }
-
+    public fun getClock():Int{
+        return count;
+    }
     public fun reSet( ampleName:String)
     {
         name?.let{sampleKeypointsList=read_json(it)}
@@ -134,9 +140,9 @@ class Sample(
 
     public fun exec(usrPersonsList:List<Person>):Triple<Double, MutableList<Double>, Matrix> {
         //初始化
-        var markScore = 0.0
-        var scoreByPart = mutableListOf<Double>(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
-
+        var fake_markScore = 0.0
+        var fake_scoreByPart = mutableListOf<Double>(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+        var true_scoreByPart = mutableListOf<Double>(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
         //初始化计算的前后帧数
         var begin: Int = count - 2
         var end: Int = count + 3
@@ -160,13 +166,14 @@ class Sample(
             var tempUsrVectors = DataTypeTransfor().get_posture_vector_Jama(affAffine_usrKeypoints)
 
             //初始化局部数据结构
-            var tempScoreByPart = mutableListOf<Double>(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
-            var tempMarkScore = 0.0
+            var fake_tempScoreByPart = mutableListOf<Double>(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+            var true_tempScoreByPart = mutableListOf<Double>(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+            var fake_tempMarkScore = 0.0
 
             //遍历11个部位，分别计算每个部位的得分
             for (j in 0..10)
             {
-                tempScoreByPart[j] = DTWprocess().cosine_point_distance_Jama(
+                val dis= DTWprocess().cosine_point_distance_Jama(
                     DataTypeTransfor().divide_Jama(
                         listOf(tempUsrVectors),
                         BoneVectorPart.fromInt(j)
@@ -176,28 +183,31 @@ class Sample(
                         BoneVectorPart.fromInt(j)
                     ).get(0)
                 )
-                tempMarkScore += bodyWeight[j] * tempScoreByPart[j]
+                fake_tempScoreByPart[j] =dis.first
+                true_tempScoreByPart[j] =dis.second
+                fake_tempMarkScore += bodyWeight[j] * fake_tempScoreByPart[j]
             }
-            if (tempMarkScore > markScore)
+            if (fake_tempMarkScore > fake_markScore)
             {
-                scoreByPart = tempScoreByPart
-                markScore = tempMarkScore
+                fake_scoreByPart = fake_tempScoreByPart
+                true_scoreByPart = true_tempScoreByPart
+                fake_markScore = fake_tempMarkScore
                 usrVectors= tempUsrVectors
             }
         }
         if(isVoice&&(count%50==0)&&(Math.random()<=0.4)&&count!=0) {
-            throwForVoice(markScore)
+            throwForVoice(fake_markScore)
         }
 
-        if (markScore > 90) {
+        if (fake_markScore > 90) {
             if (totalScore <= 99.80) {
                 totalScore += 0.20
             }
-        } else if (markScore > 80) {
+        } else if (fake_markScore > 80) {
             if (totalScore <= 99.88) {
                 totalScore += 0.12
             }
-        } else if (markScore > 50) {
+        } else if (fake_markScore > 50) {
             if (totalScore >= 0.5) {
                 totalScore -= 0.5
             }
@@ -206,7 +216,7 @@ class Sample(
                 totalScore -= 0.8
             }
         }
-        return Triple(totalScore,scoreByPart,usrVectors)
+        return Triple(totalScore,true_scoreByPart,usrVectors)
     }
 
     fun read_json(filename:String):List<Jama.Matrix>
@@ -256,8 +266,8 @@ class Sample(
     public fun tryFirstFrame(usrPersonsList:List<Person>):Double
     {
         //初始化
-        var markScore = 0.0
-        var scoreByPart = mutableListOf<Double>(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+        var fake_markScore = 0.0
+        var fake_scoreByPart = mutableListOf<Double>(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
 
         //获得Matrix结构的用户关节点数据
         val usrKeypointsList = DataTypeTransfor().listPerson2ListMatrix_Jama(usrPersonsList)
@@ -274,7 +284,7 @@ class Sample(
         //遍历11个部位，分别计算每个部位的得分
         for (j in 0..10)
         {
-            scoreByPart[j] = DTWprocess().cosine_point_distance_Jama(
+            fake_scoreByPart[j] = DTWprocess().cosine_point_distance_Jama(
                 DataTypeTransfor().divide_Jama(
                     listOf(tempUsrVectors),
                     BoneVectorPart.fromInt(j)
@@ -283,16 +293,25 @@ class Sample(
                     listOf(sampleVectorsList[0]),
                     BoneVectorPart.fromInt(j)
                 ).get(0)
-            )
-            markScore += bodyWeight[j] * scoreByPart[j]
+            ).first
+            fake_markScore += bodyWeight[j] * fake_scoreByPart[j]
         }
-        return markScore
+        countForDect++;
+        if(fake_markScore<=97&&countForDect%100==0)
+        {
+            listener?.onPersonNotDect()
+        }
+        return fake_markScore
     }
-
+    public fun getId():Int
+    {
+        return id;
+    }
     interface scorelistener
     {
         fun onFrameScoreHeight(FrameScore:Int,part:Int)
         fun onFrameScoreLow(FrameScore:Int,part:Int)
+        fun onPersonNotDect()
     }
 
 

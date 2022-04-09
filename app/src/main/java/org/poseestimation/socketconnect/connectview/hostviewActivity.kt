@@ -17,8 +17,6 @@ import org.poseestimation.socketconnect.search.DeviceSearcher
 
 
 class hostviewActivity: AppCompatActivity() {
-    private var mContext: Context?=null
-    lateinit var view: View
     lateinit var btnSearchDeviceOpen : Button
     lateinit var slaveList: ListView
     lateinit var btnReturn:BackArrowView
@@ -50,24 +48,6 @@ class hostviewActivity: AppCompatActivity() {
             System.exit(0)
         }
         slaveList=this.findViewById(R.id.slavelist)
-//        slaveList.setOnItemClickListener(object : AdapterView.OnItemClickListener {
-//            override fun onItemClick(p0: AdapterView<*>?, view: View?, position: Int, id: Long) {
-//                val listView = p0 as ListView
-//                val listAdapter = listView.adapter
-//                val choosed: String = listAdapter.getItem(position)  as String
-//                devices.get(choosed)?.let {
-//                    sendCommand(it)
-//                }
-//                val intent = Intent(baseContext, ReceiverActivity::class.java)
-//                var slaveIp=devices.get(choosed)!!.ip
-//                intent.putExtra("slaveIP",slaveIp)
-//                clear()
-//                stopSearch()
-//                isSearchDeviceOpen = false
-//                btnSearchDeviceOpen.setText("开始搜索")
-//                startActivity(intent)
-//            }
-//        })
         btnSearchDeviceOpen.setOnClickListener{
             //创建popview进行局域网搜索
                 if (isSearchDeviceOpen) {

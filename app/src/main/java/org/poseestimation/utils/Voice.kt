@@ -8,8 +8,13 @@ import java.util.*
 import kotlin.random.Random
 
 class Voice(private val context: Context) {
-    private val lock = Any()
-    private var voicePlayer= MediaPlayer()
+
+    companion object{
+        @Volatile
+        public var voicePlayer= MediaPlayer()
+        public val lock = Any()
+    }
+
     public fun voicePraise(FrameScore: Int,part:Int)
     {
         synchronized(lock)
@@ -18,6 +23,7 @@ class Voice(private val context: Context) {
             var random: Int = 0
             random = (Math.random() * 10).toInt() % 2//0 1 2随机数
             voicePath += random.toString() + ".mp3"
+            voicePlayer.stop()
             voicePlayer?.release()
             voicePlayer = MediaPlayer()
             voicePlayer.setAudioStreamType(AudioManager.STREAM_MUSIC)
@@ -25,11 +31,12 @@ class Voice(private val context: Context) {
             voicePlayer.setDataSource(fd)
             voicePlayer.prepare()
             voicePlayer.start()
-
         }
+
     }
     public fun voiceRemind(FrameScore: Int,part:Int)
     {
+
         synchronized(lock)
         {
             var voicePath = "voice/"
@@ -73,6 +80,55 @@ class Voice(private val context: Context) {
                 }
             }
             voicePath += random.toString() + ".mp3"
+            voicePlayer.stop()
+            voicePlayer?.release()
+            voicePlayer = MediaPlayer()
+            voicePlayer.setAudioStreamType(AudioManager.STREAM_MUSIC)
+            val fd = context.assets.openFd(voicePath);
+            voicePlayer.setDataSource(fd)
+            voicePlayer.prepare()
+            voicePlayer.start()
+        }
+    }
+    public fun voiceTips()
+    {
+        synchronized(lock)
+        {
+            var voicePath = "voice/tips/"
+            voicePath += "tips" + ".mp3"
+            voicePlayer.stop()
+            voicePlayer?.release()
+            voicePlayer = MediaPlayer()
+            voicePlayer.setAudioStreamType(AudioManager.STREAM_MUSIC)
+            val fd = context.assets.openFd(voicePath);
+            voicePlayer.setDataSource(fd)
+            voicePlayer.prepare()
+            voicePlayer.start()
+        }
+    }
+    public fun voiceCountDown()
+    {
+        synchronized(lock)
+        {
+            var voicePath = "voice/countdown/"
+            voicePath += "5countdown" + ".mp3"
+            voicePlayer.stop()
+            voicePlayer?.release()
+            voicePlayer = MediaPlayer()
+            voicePlayer.setAudioStreamType(AudioManager.STREAM_MUSIC)
+            val fd = context.assets.openFd(voicePath);
+            voicePlayer.setDataSource(fd)
+            voicePlayer.prepare()
+            voicePlayer.start()
+        }
+    }
+    public fun voiceRest()
+    {
+        synchronized(lock)
+        {
+            var voicePath = "voice/rest/"
+            voicePath += "rest" + ".mp3"
+            voicePlayer.stop()
             voicePlayer?.release()
             voicePlayer = MediaPlayer()
             voicePlayer.setAudioStreamType(AudioManager.STREAM_MUSIC)

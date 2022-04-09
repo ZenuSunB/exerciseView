@@ -8,10 +8,10 @@ class ExerciseSchedule(JSONmeg:String) {
 
     companion object{
         var TagMap:JSONObject= JSONObject()
-        fun getTendency(index: Int):MutableList<Double>
+        fun getTendency(id: Int):MutableList<Double>
         {
-            var samplevideoTendency:MutableList<Int> = getTag(index)
-            var bodyWeight:MutableList<Double> = arrayListOf(0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0)
+            var samplevideoTendency:MutableList<Int> = getTag(id)
+            var bodyWeight:MutableList< Double> = arrayListOf(0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0)
             var sum:Double=0.0
             for(i in 0..samplevideoTendency.count()-1)
             { //0头部 1左臂 2右臂 3左腿 4右腿 5跨部 6双肩 7左脖子 8右脖子 9躯干左侧 10躯干右侧
@@ -83,21 +83,40 @@ class ExerciseSchedule(JSONmeg:String) {
             }
             return bodyWeight
         }
-        public fun getTag(index:Int):MutableList<Int>
+        public fun getTag(id:Int):MutableList<Int>
         {
             var temp:MutableList<Int> = arrayListOf()
-            var JsonArr=TagMap.getJSONArray(exerciseId[index].toString())
+            var JsonArr=TagMap.getJSONArray(id.toString())
             for(i in 0..JsonArr.length()-1)
             {
                 temp.add(JsonArr.getInt(i))
             }
             return temp
         }
+
+        public fun getTagByIndex(index:Int):MutableList<Int>
+        {
+            var temp:MutableList<Int> = arrayListOf()
+            var JsonArr=TagMap.getJSONArray(exerciseId.get(index).toString())
+            for(i in 0..JsonArr.length()-1)
+            {
+                temp.add(JsonArr.getInt(i))
+            }
+            return temp
+        }
+
         public fun getName(index:Int):String{
             return exerciseName.get(index)
         }
-        public fun exerciseGroups(index:Int):String{
+        public fun getExerciseGroups(index:Int):String{
             return exerciseName.get(index)
+        }
+        public fun getId(index:Int):Int{
+            return exerciseId.get(index)
+        }
+        public fun getTotalId():Int
+        {
+            return id
         }
         private var id:Int=-1
         private var size:Int=0;
@@ -124,8 +143,8 @@ class ExerciseSchedule(JSONmeg:String) {
         for(i in 0..dataArray.length()-1)
         {
             exerciseName.add(dataArray.getJSONObject(i).get("url").toString())
-            exerciseId.add(dataArray.getJSONObject(0).get("id").toString().toInt())
-            exerciseGroups.add( dataArray.getJSONObject(0).get("groups").toString().toInt())
+            exerciseId.add(dataArray.getJSONObject(i).get("id").toString().toInt())
+            exerciseGroups.add( dataArray.getJSONObject(i).get("groups").toString().toInt())
         }
         size=exerciseId.count()
         var Tagstr="{\n" +

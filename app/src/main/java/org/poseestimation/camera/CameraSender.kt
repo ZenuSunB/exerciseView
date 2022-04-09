@@ -40,6 +40,8 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import org.poseestimation.*
 import kotlin.coroutines.resumeWithException
 import org.poseestimation.data.Person
+import org.poseestimation.socketconnect.Device
+import org.poseestimation.socketconnect.communication.slave.FrameData
 import org.poseestimation.socketconnect.communication.slave.FrameDataSender
 import org.poseestimation.socketconnect.connectpopview.slavePopView
 import org.poseestimation.videodecoder.EncoderH264
@@ -130,8 +132,8 @@ class CameraSender(
         imageReader?.surface?.let { surface ->
             session = createSession(listOf(surface))
             var cameraRequest = camera?.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
-//            val fps: Range<Int> = Range.create(30,30)
-//            cameraRequest?.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE,fps)
+            val fps: Range<Int> = Range.create(25,25)
+            cameraRequest?.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE,fps)
             cameraRequest?.addTarget(surface)
             cameraRequest?.build()?.let {
                 session?.setRepeatingRequest(it, null, null)
@@ -140,9 +142,9 @@ class CameraSender(
         encoder= EncoderH264(PREVIEW_WIDTH,PREVIEW_HEIGHT,object :EncoderH264.EncoderListener{
             override fun h264(data: ByteArray) {
                 Log.d("TAG","H264 SIZE:"+data.size)
-                    slavePopView.hostDevice?.let {
+                    SenderActivity.mainHost?.let {
 //                        fos?.write(data)
-                        slavePopView.sendFrameData(data,it)
+                        sendFrameData(data,it)
                     }
             }
         })
@@ -179,7 +181,6 @@ class CameraSender(
     fun prepareCamera() {
         for (cameraId in cameraManager.cameraIdList) {
             val characteristics = cameraManager.getCameraCharacteristics(cameraId)
-
             // We don't use a front facing camera in this sample.
             val cameraDirection = characteristics.get(CameraCharacteristics.LENS_FACING)
             if (cameraDirection != null &&
@@ -289,6 +290,22 @@ class CameraSender(
 
     interface CameraSenderListener {
 
+    }
+
+    fun sendFrameData(frameData:ByteArray,device: Device) {
+        //发送命令
+        val frameData = FrameData(frameData, object : FrameData.Callback {
+            override fun onEcho(msg: String?) {
+            }
+            override fun onError(msg: String?) {
+            }
+            override fun onRequest(msg: String?) {
+            }
+            override fun onSuccess(msg: String?) {
+            }
+        })
+        frameData.setDestIp(device.ip)
+        FrameDataSender.addFrameData(frameData)
     }
 //    private var fos:FileOutputStream?=null
 //    private fun createFile()

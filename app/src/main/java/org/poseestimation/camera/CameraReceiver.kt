@@ -44,7 +44,8 @@ class CameraReceiver(
     private val context: Context,
     private val mainActivity: Activity,
     private val firstSamplevideoTendency :MutableList<Int>,
-    private val firstSamplevideoName :String
+    private val firstSamplevideoName :String,
+    private val firstSamplevideoId:Int
 ) {
 
     companion object {
@@ -85,30 +86,35 @@ class CameraReceiver(
     //初期检测人是否在摄像头内部
     private var isPersonDetect:Boolean=false
 
-    //全局最新的帧
-
     //定时器设置
     private var NewFrameGenerator = Timer().schedule(object :TimerTask(){
         override fun run() {
+            if(detector==null)
+            {
+                cancel()
+            }
             var tempBitmap:Bitmap?=newestBitmap;
             tempBitmap?.let{
                 processImage(tempBitmap)
             }
         }
-    },0,100)
+    },2000,100)
 
     //初始化摄像机，并设置监听器
      suspend fun initCamera() {
 //        createFile()
-        Samples.add(Sample(firstSamplevideoName+".processed.json",context,1,firstSamplevideoTendency,object:Sample.scorelistener{
+        Samples.add(Sample(firstSamplevideoName+".processed.json",context,firstSamplevideoId,firstSamplevideoTendency,object:Sample.scorelistener{
             override fun onFrameScoreHeight(FrameScore: Int,part:Int) {
                 voice.voicePraise(FrameScore,part)
             }
             override fun onFrameScoreLow(FrameScore: Int,part:Int) {
                 voice.voiceRemind(FrameScore,part)
             }
+            override fun onPersonNotDect() {
+                voice.voiceTips()
+            }
         }))
-        Users.add(ResJSdata(0))
+        Users.add(ResJSdata(firstSamplevideoId))
 
     }
 
@@ -127,12 +133,16 @@ class CameraReceiver(
 
     }
 
-    fun resume() {
+    fun resume()
+    {
+
     }
 
     fun close() {
         detector?.close()
         detector = null
+        isPersonDetect=true
+
 
     }
 
@@ -161,18 +171,18 @@ class CameraReceiver(
                         scoreBypart = S.second
                         uservector = S.third
                     }
-                    Users[index].append(scoreBypart, uservector)
+                    if(Samples[index].getClock()%5==0)
+                        Users[index].append(scoreBypart, uservector,Samples[index].getSampleVectorNow())
                     listener?.onImageprocessListener(score.toInt())
                 }
                 print("");
             }
             else if (isPersonDetect == false) {
                 detector?.estimatePoses(bitmap)?.let {
-                    if (it.get(0).isTrust()) {
-                        if(Samples[index].tryFirstFrame(it)>=97) {
-                            isPersonDetect = true
-                            listener?.onPersonDetected()
-                        }
+                    if (Samples[index].tryFirstFrame(it)>=97&&it.get(0).isTrustMoreSerious())
+                    {
+                        isPersonDetect = true
+                        listener?.onPersonDetected()
                     }
                 }
             }
