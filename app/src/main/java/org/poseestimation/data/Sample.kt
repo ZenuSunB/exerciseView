@@ -203,6 +203,10 @@ class Sample(
             if (totalScore <= 99.80) {
                 totalScore += 0.20
             }
+            else
+            {
+                totalScore = 100.00
+            }
         } else if (fake_markScore > 80) {
             if (totalScore <= 99.88) {
                 totalScore += 0.12

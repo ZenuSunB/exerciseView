@@ -59,6 +59,7 @@ class ReceiverActivity: AppCompatActivity() {
     private val voice= org.poseestimation.utils.Voice(this)
     private var videoviewrepetend: VideoViewRepetend? =null
     private var FrameReceiverConnectThread:Thread?=null
+    private lateinit var scoreTextView: TextView
     private val requestPermissionLauncher =
         registerForActivityResult(
             ActivityResultContracts.RequestPermission()
@@ -99,7 +100,7 @@ class ReceiverActivity: AppCompatActivity() {
         surfaceView = findViewById(R.id.surfaceView)
         videoView = findViewById(R.id.videoView)
         countdownViewFramLayout=findViewById(R.id.countDownViewLayout)
-
+        scoreTextView=findViewById(R.id.score)
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R ||
             Environment.isExternalStorageManager()) {
@@ -234,7 +235,10 @@ class ReceiverActivity: AppCompatActivity() {
                 cameraReceiver =
                     CameraReceiver(surfaceView, object : CameraReceiver.CameraReceiverListener {
                         override fun onImageprocessListener(score: Int) {
-                            msquareProgress.setCurProgress(score);
+                            msquareProgress.setCurProgress(score)
+                            runOnUiThread {
+                                scoreTextView.setText(score.toString())
+                            }
                         }
                         override fun onDetectedInfo( personScore: Float?,poseLabels: List<Pair<String, Float>>?) {
                             TODO("Not yet implemented")

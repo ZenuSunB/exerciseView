@@ -15,23 +15,24 @@
 
 
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/llLeft"
+        android:id="@+id/constrainLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_gravity="center">
 
+
         <VideoView
             android:id="@+id/videoView"
             android:layout_width="0dp"
-            android:layout_height="match_parent"
+            android:layout_height="fill_parent"
             android:layout_marginLeft="15dp"
             android:layout_marginTop="15dp"
             android:layout_marginBottom="15dp"
-
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toLeftOf="@+id/surfaceView"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="1.0" />
 
         <SurfaceView
             android:id="@+id/surfaceView"
@@ -46,6 +47,17 @@
             app:layout_constraintLeft_toRightOf="@+id/videoView"
             app:layout_constraintTop_toTopOf="parent" />
     </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <TextView
+        android:id="@+id/score"
+        android:layout_width="wrap_content"
+        android:layout_height="50dp"
+        android:layout_marginLeft="50dp"
+        android:layout_marginTop="30dp"
+        android:fontFamily="@font/sarpanch_medium"
+        android:text="100"
+        android:textColor="#90008B45"
+        android:textSize="45dp" />
 
     <FrameLayout
         android:id="@+id/countDownViewLayout"

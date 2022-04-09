@@ -142,8 +142,6 @@ class CameraReceiver(
         detector?.close()
         detector = null
         isPersonDetect=true
-
-
     }
 
     //process image

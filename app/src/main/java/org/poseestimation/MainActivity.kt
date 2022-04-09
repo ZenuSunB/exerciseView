@@ -40,6 +40,7 @@ class MainActivity :AppCompatActivity() {
     private lateinit var videoView: VideoView
     private lateinit var countdownView: SurfaceView
     private lateinit var countdownViewFramLayout: FrameLayout
+    private lateinit var scoreTextView: TextView
     private var cameraSource: CameraSource? = null
 
     private val voice= org.poseestimation.utils.Voice(this)
@@ -68,7 +69,7 @@ class MainActivity :AppCompatActivity() {
         surfaceView = findViewById(R.id.surfaceView)
         videoView = findViewById(R.id.videoView)
         countdownViewFramLayout=findViewById(R.id.countDownViewLayout)
-
+        scoreTextView=findViewById(R.id.score)
         if (!isCameraPermissionGranted()) {
             requestPermission()
         }
@@ -203,6 +204,9 @@ class MainActivity :AppCompatActivity() {
                     CameraSource(surfaceView, object : CameraSource.CameraSourceListener {
                         override fun onImageprocessListener(score: Int) {
                             msquareProgress.setCurProgress(score);
+                            runOnUiThread {
+                                scoreTextView.setText(score.toString())
+                            }
                         }
                         override fun onDetectedInfo( personScore: Float?,poseLabels: List<Pair<String, Float>>?) {
                             TODO("Not yet implemented")

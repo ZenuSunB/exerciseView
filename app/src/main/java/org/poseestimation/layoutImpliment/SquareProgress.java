@@ -46,7 +46,7 @@ public class SquareProgress extends View {
     private int curColor = Color.GREEN;//当前进度条颜色为蓝色
     private int dotColor = Color.RED;//进度条前端的小圆点为红色
     private float allLength;//进度条的总长度
-    private int maxProgress = 100;//总的进度条长度为100（可改变）
+    private int maxProgress = 101;//总的进度条长度为100（可改变）
     private int curProgress = 0;//当前进度为30（可改变）
     private Paint curPaint;//当前进度条的画笔
     private Paint maxPaint;//总进度条的画笔
@@ -189,9 +189,9 @@ public class SquareProgress extends View {
             dotCY = point1Y;
             curPath.lineTo(point1X, point1Y);
         }
-        Integer red=R.get((int)((curProgress/100.0)*R.size()));
-        Integer green=G.get((int)((curProgress/100.0)*G.size()));
-        Integer blue=B.get((int)((curProgress/100.0)*B.size()));
+        Integer red = R.get((int)((curProgress/100.1)*R.size()));
+        Integer green = G.get((int)((curProgress/100.1)*G.size()));
+        Integer blue = B.get((int)((curProgress/100.1)*B.size()));
         curPaint.setColor(Color.rgb(red,green,blue));
 
         Log.i(TAG, "onDraw: dotC:" + dotCX + "," + dotCY);
