@@ -11,8 +11,8 @@ import java.nio.ByteBuffer
 class DecoderH264(
     private val width:Int,
     private val height:Int,
-    private var listener: DecoderListener? = null) {
-    private var frameRate: Int = 25
+    private var listener: DecoderListener? = null,
+    private var frameRate:Int=25) {
     private val COLOR_FormatI420 = 1
     private val COLOR_FormatNV21 = 2
     private fun isImageFormatSupported(image: Image): Boolean {

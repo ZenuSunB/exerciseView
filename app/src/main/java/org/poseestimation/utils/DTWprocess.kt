@@ -28,7 +28,6 @@ class DTWprocess {
         var true_dis:Double=0.0.toDouble()
         var fake_dis:Double=0.0.toDouble()
         val dimension:Int=X.rowDimension
-
         //归一化&&缺陷值NaN处理
         var X_norm:DoubleMatrix= DoubleMatrix(dimension,num_dimension)
         var Y_norm:DoubleMatrix= DoubleMatrix(dimension,num_dimension)
@@ -60,10 +59,11 @@ class DTWprocess {
         {
             if(!isNaN(X_norm[i, 0]) &&!isNaN(X_norm[i, 1]) &&!isNaN(Y_norm[i, 0]) &&!isNaN(Y_norm[i, 1]))
             {
-                true_dis+=X_norm[i,0]*Y_norm[i,0]+X_norm[i,1]*Y_norm[i,1]
-                if(X_norm[i,0]*Y_norm[i,0]+X_norm[i,1]*Y_norm[i,1]> sqrt(3.0) /2)
+                val tmp_dis=X_norm[i,0]*Y_norm[i,0]+X_norm[i,1]*Y_norm[i,1]
+                true_dis+=tmp_dis
+                if(tmp_dis> sqrt(3.0) /2)
                     fake_dis+=1
-                else if(X_norm[i,0]*Y_norm[i,0]+X_norm[i,1]*Y_norm[i,1]> sqrt(2.0) /2)
+                else if(tmp_dis> sqrt(2.0) /2)
                     fake_dis+=0
                 else
                     fake_dis+=-1
@@ -75,9 +75,19 @@ class DTWprocess {
             }
         }
         //(dis+dimension)*(dis+dimension)*100/(2*dimension*2*dimension)
+//        return Pair<Double,Double>(
+//            (fake_dis+dimension)*(fake_dis+dimension)*100/(2*dimension*2*dimension),
+//            (true_dis+dimension)*100.0/(2*dimension)
+//        )
+        var true_res_dis:Double=0.0
+        true_dis=Math.toDegrees(Math.acos(true_dis/(dimension)))
+        if(true_dis<=30&&true_dis>=0)
+        {
+            true_res_dis=(30-true_dis)*100/30
+        }
         return Pair<Double,Double>(
-            (fake_dis+dimension)*(fake_dis+dimension)*100/(2*dimension*2*dimension),
-            (true_dis+dimension)*100/(2*dimension)
+            (fake_dis+dimension.toDouble())*(fake_dis+dimension.toDouble())*100.0/(2*dimension.toDouble()*2*dimension.toDouble()),
+            true_res_dis
         )
     }
 
@@ -148,7 +158,6 @@ class DTWprocess {
             x=path_matrix[tempX][tempY][0]
             y=path_matrix[tempX][tempY][1]
         }
-        println(path_list)
         var DTWres=Dtwresponse(path_list,cost[M-1,N-1])
         return  DTWres
     }

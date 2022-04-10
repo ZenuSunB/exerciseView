@@ -45,7 +45,7 @@ class ResJSdata(private var sampleId:Int=-1) {
         scoreBypart.add(scoreByPart)
         Vectorslist.add(userVector)
         SampleVectorslist.add(sampleVetor)
-        if(scoreByPart.sum()==0.0)
+        if(scoreByPart.sum()<=75*scoreByPart.count())
             completeness.add(false)//缺失
         else
             completeness.add(true)//非缺失
@@ -96,7 +96,6 @@ class ResJSdata(private var sampleId:Int=-1) {
                 thirdV=ExerciseTendency[i]
             }
         }
-        println("++++++"+first+" "+second+" "+third)
         val tool=DataTypeTransfor()
         dtwres=DTWprocess().exec_Jama(
             tool.mergin_Jama(arrayListOf(
@@ -122,6 +121,8 @@ class ResJSdata(private var sampleId:Int=-1) {
         var EXTresArray:JSONArray = JSONArray()//运动强度的返回数据
 
         var SCOresList:JSONObject = JSONObject()//运动分数的返回数据
+
+
         var PartMap:Map<Int,String> = mapOf(
             0 to "头部",
             1 to  "左臂",
@@ -191,16 +192,24 @@ class ResJSdata(private var sampleId:Int=-1) {
             if(i!=count-1)
                 EXTresArray.put(getExerciseIntensityLevel(exerciseIntensity[i]))
         }
+        var COOrdination:Double=0.0;
+        var X_len=dtwres?.DTW_PathList.get(0).first+1
+        var Y_len=dtwres?.DTW_PathList.get(0).second+1
+        var k=Y_len.toDouble()/X_len.toDouble()
         for(i in 1..dtwres?.DTW_PathList.count())
         {
+            var x=dtwres?.DTW_PathList.get(dtwres?.DTW_PathList.count()-i).first
+            var y=dtwres?.DTW_PathList.get(dtwres?.DTW_PathList.count()-i).second
             var path_point:JSONArray = JSONArray()
-            path_point.put(dtwres?.DTW_PathList.get(dtwres?.DTW_PathList.count()-i).first)
-            path_point.put(dtwres?.DTW_PathList.get(dtwres?.DTW_PathList.count()-i).second)
+            path_point.put(x)
+            path_point.put((y-k*x.toDouble()).toInt())
+            COOrdination+=Math.abs(y.toDouble()-k*x.toDouble())
             DTWpathlist.put(path_point)
         }
+        COOrdination=((X_len.toDouble()*Y_len.toDouble()/2.0) - COOrdination)*100/(X_len.toDouble()*Y_len.toDouble()/2.0)
         DTWscore.put(dtwres.score.toInt())
         DTWresobj.put("path",DTWpathlist)
-        DTWresobj.put("score",DTWscore)
+        DTWresobj.put("score",COOrdination)
 
         ALLresobj.put("scorebypart",SCOresList)
         ALLresobj.put("completeness",CPNresArray)

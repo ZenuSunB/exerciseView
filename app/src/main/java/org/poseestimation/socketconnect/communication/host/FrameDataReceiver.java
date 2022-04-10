@@ -10,6 +10,7 @@ import org.poseestimation.camera.CameraReceiver;
 import org.poseestimation.socketconnect.RemoteConst;
 import org.poseestimation.socketconnect.communication.CommunicationKey;
 import org.poseestimation.videodecoder.DecoderH264;
+import org.poseestimation.videodecoder.GlobalStaticVariable;
 
 import java.io.BufferedInputStream;
 import java.io.DataInputStream;
@@ -48,9 +49,11 @@ public class FrameDataReceiver {
     public static void open(FrameDataReceiver.FrameDataListener frameDataListener)
     {
         try {
+            Log.d("TAG", "open: ++++++++++++++++++++++111");
             serverSocket = new ServerSocket(RemoteConst.FRAME_RECEIVE_PORT);
             socket = serverSocket.accept();
             is = new DataInputStream(socket.getInputStream());
+            Log.d("TAG", "open: ++++++++++++++++++++++222");
         }
         catch (IOException e)
         {
@@ -58,7 +61,7 @@ public class FrameDataReceiver {
         }
         listener = frameDataListener;
         isOpen = true;
-        decoder=new DecoderH264(CameraReceiver.PREVIEW_WIDTH, CameraReceiver.PREVIEW_HEIGHT,
+        decoder=new DecoderH264(GlobalStaticVariable.Companion.getFrameWidth(), GlobalStaticVariable.Companion.getFrameLength(),
                 new DecoderH264.DecoderListener() {
             @Override
             public void YUV420(@Nullable Image image) {
@@ -67,7 +70,7 @@ public class FrameDataReceiver {
                     listener.onReceive(image);
                 }
             }
-        });
+        },GlobalStaticVariable.Companion.getFrameRate());
         executorService.execute(new Runnable() {
             @Override
             public void run() {

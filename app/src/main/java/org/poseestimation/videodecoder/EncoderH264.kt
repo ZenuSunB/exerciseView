@@ -1,6 +1,7 @@
 package org.poseestimation.videodecoder
 
 import android.graphics.ImageFormat
+import android.graphics.PixelFormat
 import android.media.Image
 import android.media.MediaCodec
 import android.media.MediaCodecInfo
@@ -11,38 +12,14 @@ import java.nio.ByteBuffer
 class EncoderH264(
         private var width:Int,
         private var height:Int,
-        private var listener: EncoderListener? = null)
+        private var listener: EncoderListener? = null,
+        private var frameRate:Int=25)
 {
-    private var frameRate:Int=25
     private lateinit var mediaCodec: MediaCodec
     private val COLOR_FormatI420 = 1
     private val COLOR_FormatNV21 = 2
     companion object{
         var index:Int=0;
-//        var newestFrame:Image?=null;
-//        var isNewFrame:Boolean=true;
-//
-//        public fun getFrame():Image?
-//        {
-//            synchronized(Any())
-//            {
-//                if (isNewFrame)
-//                {
-////                    isNewFrame=false;
-//                    return newestFrame;
-//                }
-//                else
-//                    return null
-//            }
-//        }
-//        public fun putFrame(frame:Image)
-//        {
-//            synchronized(Any())
-//            {
-//                isNewFrame=true;
-//                newestFrame=frame;
-//            }
-//        }
     }
     init{
         initMediaCodec()
@@ -163,10 +140,61 @@ class EncoderH264(
     {
         val format = image.format
         when (format) {
-            ImageFormat.YUV_420_888, ImageFormat.NV21, ImageFormat.YV12 -> return true
+            PixelFormat.RGBA_8888, ImageFormat.YUV_420_888, ImageFormat.NV21, ImageFormat.YV12 -> return true
         }
         return false
     }
+    fun image_rgba8888_to_nv21(image: Image, width: Int, height: Int): ByteArray {
+        //获取基本参数
+        val mWidth: Int = image?.width                            //image中图像数据得到的宽
+        val mHeight: Int = image?.height                          //image中图像数据得到的高
+        val planes = image.planes       							//image图像数据对象
+        val buffer = planes[0].getBuffer()
+        val pixelStride = planes[0].getPixelStride()          	//像素步幅
+        val rowStride = planes[0].getRowStride()     		 	    //行距
+        val rowPadding = rowStride - pixelStride * mWidth         //行填充数据（得到的数据宽度大于指定的width,多出来的数据就是填充数据）
+        /*
+          以480*640尺寸为例
+          Image对象获取到的RGBA_8888数据格式分析如下
+          1.getPixelStride方法获取相邻像素间距 = 4
+          2.getRowStride方法获取行跨度 = 2048
+          3.2048-4*480 = 128，说明每行多出128个byte，这128个byte表示行填充的值，里面的数据为无效数据。
+          4.转换：需要将每行的最后128个数据忽略掉，再进行转换
+         */
+        //得到bytes类型的rgba数据
+        val len: Int = buffer.limit() - buffer.position()
+        val rgba = ByteArray(len)
+        buffer.get(rgba)
+
+        var yIndex = 0
+        var uvIndex = width * height
+        var argbIndex = 0
+        //nv21数据初始化
+        val nv21 = ByteArray(width * height * 3 / 2)
+
+        for (j in 0 until height) {
+            for (i in 0 until width) {
+                var r: Int = rgba.get(argbIndex ++).toInt()
+                var g: Int = rgba.get(argbIndex ++).toInt()
+                var b: Int = rgba.get(argbIndex ++).toInt()
+                argbIndex ++ //跳过a
+                r = r and 0x000000FF
+                g = g and 0x000000FF
+                b = b and 0x000000FF
+                val y = (66 * r + 129 * g + 25 * b + 128 shr 8) + 16
+                nv21[yIndex ++] = (if (y > 0xFF) 0xFF else if (y < 0) 0 else y).toByte()
+                if (j and 1 == 0 && argbIndex shr 2 and 1 == 0 && uvIndex < nv21.size - 2) {
+                    val u = (- 38 * r - 74 * g + 112 * b + 128 shr 8) + 128
+                    val v = (112 * r - 94 * g - 18 * b + 128 shr 8) + 128
+                    nv21[uvIndex ++] = (if (v > 0xFF) 0xFF else if (v < 0) 0 else v).toByte()
+                    nv21[uvIndex ++] = (if (u > 0xFF) 0xFF else if (u < 0) 0 else u).toByte()
+                }
+            }
+            argbIndex += rowPadding	//跳过rowPadding长度的填充数据
+        }
+        return nv21;
+    }
+
     fun YV12toYUV420PackedSemiPlanar(input: ByteArray, width: Int, height: Int): ByteArray? {
         val frameSize = width * height
         val qFrameSize = frameSize / 4
@@ -191,6 +219,10 @@ class EncoderH264(
         }
         if (!isImageFormatSupported(image)) {
             throw RuntimeException("can't convert Image to byte array, format " + image.getFormat());
+        }
+        if(image.format==PixelFormat.RGBA_8888&&colorFormat==COLOR_FormatNV21)
+        {
+            return  image_rgba8888_to_nv21(image,image.width,image.height)
         }
         val crop=image.cropRect
         val format=image.format

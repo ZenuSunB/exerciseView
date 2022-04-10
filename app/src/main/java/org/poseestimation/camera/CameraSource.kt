@@ -295,7 +295,7 @@ class CameraSource(
                         scoreBypart = S.second
                         uservector = S.third
                     }
-                    if(Samples[index].getClock()%5==0)
+                    if(Samples[index].getClock()%2==0)
                         Users[index].append(scoreBypart, uservector,Samples[index].getSampleVectorNow())
                     listener?.onImageprocessListener(score.toInt())
                 }

@@ -144,8 +144,8 @@ class Sample(
         var fake_scoreByPart = mutableListOf<Double>(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
         var true_scoreByPart = mutableListOf<Double>(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
         //初始化计算的前后帧数
-        var begin: Int = count - 2
-        var end: Int = count + 3
+        var begin: Int = count
+        var end: Int = count + 1
         if (begin < 0) begin = 0
         if (end >= sampleKeypointsList.count()) end = sampleKeypointsList.count()
 
@@ -169,10 +169,22 @@ class Sample(
             var fake_tempScoreByPart = mutableListOf<Double>(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
             var true_tempScoreByPart = mutableListOf<Double>(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
             var fake_tempMarkScore = 0.0
-
+            var PartMap:Map<Int,String> = mapOf(
+                0 to "头部",
+                1 to  "左臂",
+                2 to  "右臂",
+                3 to "左腿",
+                4 to "右腿",
+                5 to "跨部",
+                6 to "双肩",
+                7 to "左脖子" ,
+                8 to "右脖子",
+                9 to "躯干左侧",
+                10 to "躯干右侧")
             //遍历11个部位，分别计算每个部位的得分
             for (j in 0..10)
             {
+
                 val dis= DTWprocess().cosine_point_distance_Jama(
                     DataTypeTransfor().divide_Jama(
                         listOf(tempUsrVectors),
@@ -183,9 +195,12 @@ class Sample(
                         BoneVectorPart.fromInt(j)
                     ).get(0)
                 )
-                fake_tempScoreByPart[j] =dis.first
-                true_tempScoreByPart[j] =dis.second
+                fake_tempScoreByPart[j] =dis.first //fake
+                true_tempScoreByPart[j] =dis.second//true
                 fake_tempMarkScore += bodyWeight[j] * fake_tempScoreByPart[j]
+//                println("+++++++++1"+PartMap[j]+" false: "+fake_tempScoreByPart[j])
+                if(j==1||j==2)
+                    println("+++++++++2"+PartMap[j]+" true: "+true_tempScoreByPart[j])
             }
             if (fake_tempMarkScore > fake_markScore)
             {

@@ -7,8 +7,12 @@ import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.res.Resources
+import android.media.ImageReader
+import android.media.projection.MediaProjectionManager
 import android.os.*
 import android.provider.Settings
+import android.util.Log
 import android.view.*
 import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
@@ -25,6 +29,11 @@ import org.poseestimation.data.*
 import org.poseestimation.layoutImpliment.SquareProgress
 import org.poseestimation.ml.ModelType
 import org.poseestimation.ml.MoveNet
+import org.poseestimation.service.screenCaptureService
+import org.poseestimation.socketconnect.communication.slave.FrameData
+import org.poseestimation.socketconnect.communication.slave.FrameDataSender
+import org.poseestimation.videodecoder.EncoderH264
+import org.poseestimation.videodecoder.GlobalStaticVariable
 import java.io.FileOutputStream
 import kotlin.concurrent.thread
 
@@ -34,6 +43,8 @@ class MainActivity :AppCompatActivity() {
     }
     /** A [SurfaceView] for camera preview.   */
     private lateinit var surfaceView: SurfaceView
+
+    private val REQUEST_CODE = 1
 
     private var device = Device.GPU
     private lateinit var msquareProgress: SquareProgress
@@ -45,6 +56,26 @@ class MainActivity :AppCompatActivity() {
 
     private val voice= org.poseestimation.utils.Voice(this)
     private var videoviewrepetend:VideoViewRepetend? =null
+
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~For Screen Projection~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    private var encoder: EncoderH264?=null
+    private var mainScreenReceiver:org.poseestimation.socketconnect.Device?=null
+    fun sendFrameData(frameData:ByteArray,device: org.poseestimation.socketconnect.Device) {
+        //发送命令
+        val frameData = FrameData(frameData, object : FrameData.Callback {
+            override fun onEcho(msg: String?) {
+            }
+            override fun onError(msg: String?) {
+            }
+            override fun onRequest(msg: String?) {
+            }
+            override fun onSuccess(msg: String?) {
+            }
+        })
+        frameData.setDestIp(device.ip)
+        FrameDataSender.addFrameData(frameData)
+    }
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~For Screen Projection~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     private val requestPermissionLauncher =
         registerForActivityResult(
@@ -63,7 +94,12 @@ class MainActivity :AppCompatActivity() {
         setContentView(R.layout.activity_main)
         // keep screen on while app is running
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-
+        hideSystemUI()
+        var bundle=intent.getExtras()
+        bundle?.getInt("isScreenProjection")?.let{
+            mainScreenReceiver=org.poseestimation.socketconnect.Device(bundle?.getString("screenReceiverIp"))
+            screenProjectioninit()
+        }
         msquareProgress = findViewById(R.id.sp);
         countdownView= findViewById(R.id.countDownView)
         surfaceView = findViewById(R.id.surfaceView)
@@ -89,21 +125,12 @@ class MainActivity :AppCompatActivity() {
     }
     override fun onStart() {
         super.onStart()
+
     }
     private fun initView(){
 
         val mainActivity=this
-        val JsonMeg="{\n" +
-                "    \"id\": 5,\n"+
-                "    \"data\": [\n" +
-                "        {\n" +
-                "            \"id\": 24,\n" +
-                "            \"url\": \"sample24\",\n" +
-                "            \"groups\": \"2\"\n" +
-                "        }]}"
-
-/*
-        ="{\n" +
+        val JsonMeg      ="{\n" +
                 "    \"id\": 1,\n"+
                 "    \"data\": [\n" +
                 "        {\n" +
@@ -116,8 +143,16 @@ class MainActivity :AppCompatActivity() {
                 "            \"url\": \"sample7\",\n" +
                 "            \"groups\": \"2\"\n" +
                 "        }]}"
-*/
 
+
+//                ="{\n" +
+//                "    \"id\": 5,\n"+
+//                "    \"data\": [\n" +
+//                "        {\n" +
+//                "            \"id\": 24,\n" +
+//                "            \"url\": \"sample24\",\n" +
+//                "            \"groups\": \"2\"\n" +
+//                "        }]}"
         videoviewrepetend= VideoViewRepetend(JsonMeg,this,videoView,countdownView,countdownViewFramLayout,this.baseContext,object:VideoViewRepetend.VideoViewRepetendListener{
             override fun onExerciseEnd(index:Int,samplevideoName:String,samplevideoTendency:MutableList<Int>,id:Int) {
                 //一轮运动完成，开始创建下一轮运动的数据结构
@@ -196,6 +231,7 @@ class MainActivity :AppCompatActivity() {
 
     override fun onStop() {
         super.onStop()
+        mainScreenReceiver?.let { stopProjection() }
     }
 
     // check if permission is granted or not.
@@ -300,6 +336,76 @@ class MainActivity :AppCompatActivity() {
         else {
             return false
         }
+    }
+
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~For Screen Projection~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    private fun screenProjectioninit()
+    {
+        GlobalStaticVariable.frameRate=10
+        setOnImageAvailableListener(object :ImageReader.OnImageAvailableListener {
+            override fun onImageAvailable(mImageReader: ImageReader?) {
+                var image = mImageReader?.acquireLatestImage()
+                image?.let {
+                    encoder?.encoderH264(image)
+                    image?.close()
+                }
+            }
+        })
+        // get width and height
+        encoder= EncoderH264(
+            GlobalStaticVariable.frameLength,GlobalStaticVariable.frameWidth
+            ,object : EncoderH264.EncoderListener{
+                override fun h264(data: ByteArray) {
+                    Log.d("TAG","H264 SIZE:"+data.size)
+                    mainScreenReceiver?.let {
+                        sendFrameData(data,it)
+                    }
+                }
+            },GlobalStaticVariable.frameRate)
+        startProjection()
+    }
+    private fun startProjection() {
+        val mProjectionManager =
+            getSystemService(MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
+        startActivityForResult(mProjectionManager.createScreenCaptureIntent(), REQUEST_CODE)
+    }
+    private fun setOnImageAvailableListener(obj: ImageReader.OnImageAvailableListener)
+    {
+        screenCaptureService.setOnImageAvailableListener(obj)
+    }
+    private fun stopProjection() {
+        startService(screenCaptureService.getStopIntent(this))
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == REQUEST_CODE) {
+            if (resultCode == RESULT_OK) {
+                startService(
+                    screenCaptureService.getStartIntent(
+                        this,
+                        resultCode,
+                        data
+                    )
+                )
+            }
+        }
+    }
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~For Screen Projection~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    private fun hideSystemUI() {
+        // Enables regular immersive mode.
+        // For "lean back" mode, remove SYSTEM_UI_FLAG_IMMERSIVE.
+        // Or for "sticky immersive," replace it with SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+        window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_IMMERSIVE
+                // Set the content to appear under the system bars so that the
+                // content doesn't resize when the system bars hide and show.
+                or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                // Hide the nav bar and status bar
+                or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                or View.SYSTEM_UI_FLAG_FULLSCREEN)
     }
 
     private fun showToast(message: String) {

@@ -31,7 +31,7 @@ public class CommandReceiver {
     private static volatile boolean isOpen;
 
 
-    public static void open(CommandListener commandListener){
+    public static void start(CommandListener commandListener){
         listener = commandListener;
         isOpen = true;
         threadPool.execute(new Runnable() {
@@ -48,6 +48,9 @@ public class CommandReceiver {
                 }
             }
         });
+    }
+    public static void open(){
+        isOpen = true;
     }
 
     public static void close(){
