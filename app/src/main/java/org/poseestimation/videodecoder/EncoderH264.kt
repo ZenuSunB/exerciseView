@@ -6,6 +6,8 @@ import android.media.Image
 import android.media.MediaCodec
 import android.media.MediaCodecInfo
 import android.media.MediaFormat
+import android.view.Surface
+import org.poseestimation.service.screenCaptureService
 import java.nio.ByteBuffer
 
 
@@ -29,7 +31,6 @@ class EncoderH264(
     {
         mediaCodec = MediaCodec.createEncoderByType("video/avc")
         //height和width一般都是照相机的height和width。
-        //因为获取到的视频帧数据是逆时针旋转了90度的，所以这里宽高需要对调
         var mediaFormat = MediaFormat.createVideoFormat("video/avc", width, height)
         //描述平均位速率（以位/秒为单位）的键。 关联的值是一个整数
         mediaFormat.setInteger(MediaFormat.KEY_BIT_RATE, width * height)
@@ -37,15 +38,46 @@ class EncoderH264(
         mediaFormat.setInteger(MediaFormat.KEY_FRAME_RATE, frameRate)
 //        mediaFormat.setInteger(MediaFormat.KEY_BITRATE_MODE,MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_CBR)
         //色彩格式，具体查看相关API，不同设备支持的色彩格式不尽相同
-        mediaFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar   )
+        //COLOR_FormatYUV420SemiPlanar
+        if(GlobalStaticVariable.isScreenCapture)
+            mediaFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface)
+        else
+            mediaFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar )
         //关键帧间隔时间，单位是秒
         mediaFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1);
-
         mediaCodec.configure(mediaFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
 
+        if(GlobalStaticVariable.isScreenCapture)
+        {
+            screenCaptureService.surface = mediaCodec.createInputSurface()
+            //开始编码
+            mediaCodec.start()
+            val videoEncoderThread=Thread{
+                while(true) {
+                    //拿到输出缓冲区,用于取到编码后的数据
+                    val outputBuffers = mediaCodec.outputBuffers
+                    val bufferInfo = MediaCodec.BufferInfo()
+                    //拿到输出缓冲区的索引
+                    var outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, 0)
+                    while (outputBufferIndex >= 0) {
+                        var outputBuffer = outputBuffers[outputBufferIndex]
+                        var outData = ByteArray(bufferInfo.size)
+                        outputBuffer.get(outData);
+                        //outData就是输出的h264数据
+                        listener?.h264(outData)
+                        mediaCodec.releaseOutputBuffer(outputBufferIndex, false);
+                        outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo, 0);
+                    }
+                }
 
-        //开始编码
-        mediaCodec.start()
+            }
+            videoEncoderThread.start()
+        }
+        else {
+            //开始编码
+            mediaCodec.start()
+        }
+
     }
 
     public fun encoderH264(image: Image) {

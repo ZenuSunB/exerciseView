@@ -21,6 +21,7 @@ import android.os.Looper;
 import android.util.Log;
 import android.view.Display;
 import android.view.OrientationEventListener;
+import android.view.Surface;
 import android.view.WindowManager;
 
 import java.io.FileOutputStream;
@@ -43,6 +44,7 @@ public class screenCaptureService extends Service {
     private static final String SCREENCAP_NAME = "screencap";
     private static ImageReader.OnImageAvailableListener listener;
     private static int IMAGES_PRODUCED;
+    volatile public static Surface surface;
 
     private MediaProjection mMediaProjection;
     private String mStoreDir;
@@ -212,13 +214,13 @@ public class screenCaptureService extends Service {
         // get width and height
 //        mWidth = Resources.getSystem().getDisplayMetrics().widthPixels;
 //        mHeight = Resources.getSystem().getDisplayMetrics().heightPixels;
-        mWidth = GlobalStaticVariable.Companion.getFrameWidth();
-        mHeight= GlobalStaticVariable.Companion.getFrameLength();
+        mWidth =  GlobalStaticVariable.Companion.getFrameLength();
+        mHeight=  GlobalStaticVariable.Companion.getFrameWidth();
 
-        // start capture reader
-        mImageReader = ImageReader.newInstance(mWidth, mHeight, PixelFormat.RGBA_8888, 3);
-        mVirtualDisplay = mMediaProjection.createVirtualDisplay(SCREENCAP_NAME, mWidth, mHeight,
-                mDensity, getVirtualDisplayFlags(), mImageReader.getSurface(), null, mHandler);
-        mImageReader.setOnImageAvailableListener(listener, mHandler);
+//        // start capture reader
+//        mImageReader = ImageReader.newInstance(mWidth, mHeight, PixelFormat.RGBA_8888, 10);
+//        mImageReader.setOnImageAvailableListener(listener, mHandler);
+
+        mVirtualDisplay = mMediaProjection.createVirtualDisplay(SCREENCAP_NAME, mWidth, mHeight, mDensity, getVirtualDisplayFlags(), surface, null, mHandler);
     }
 }

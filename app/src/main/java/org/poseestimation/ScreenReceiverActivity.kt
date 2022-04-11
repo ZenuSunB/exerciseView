@@ -1,5 +1,6 @@
 package org.poseestimation
 
+import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.Matrix
 import android.graphics.Rect
@@ -8,6 +9,7 @@ import android.os.Bundle
 import android.os.PersistableBundle
 import android.util.Log
 import android.view.*
+import android.widget.FrameLayout
 import androidx.appcompat.app.AppCompatActivity
 
 import org.poseestimation.socketconnect.Device
@@ -24,71 +26,33 @@ class screenReceiverActivity  : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.screen_projection_receiver)
-        FrameReceiverConnectThread?.let{
-            it.interrupt()
-        }
-        FrameReceiverConnectThread=
-            thread{
-                try {
-                    FrameDataReceiver.open(object : FrameDataReceiver.FrameDataListener {
-                        override fun onReceive(image: Image) {
-                            if (image != null) {
-                                if (!::imageBitmap.isInitialized) {
-                                    imageBitmap =
-                                        Bitmap.createBitmap(
-                                            GlobalStaticVariable.frameWidth,
-                                            GlobalStaticVariable.frameLength,
-                                            Bitmap.Config.ARGB_8888
-                                        )
-                                }
-                                yuvConverter.yuvToRgb(image, imageBitmap)
-                                val holder = screenSurfaceView.holder
-                                val surfaceCanvas = holder.lockCanvas()
-                                surfaceCanvas?.let { canvas ->
-                                    val screenWidth: Int
-                                    val screenHeight: Int
-                                    val left: Int
-                                    val top: Int
-
-                                    if (canvas.height > canvas.width) {
-                                        val ratio = imageBitmap.height.toFloat() / imageBitmap.width
-                                        screenWidth = canvas.width
-                                        left = 0
-                                        screenHeight = (canvas.width * ratio).toInt()
-                                        top = (canvas.height - screenHeight) / 2
-                                    } else {
-                                        val ratio = imageBitmap.width.toFloat() / imageBitmap.height
-                                        screenHeight = canvas.height
-                                        top = 0
-                                        screenWidth = (canvas.height * ratio).toInt()
-                                        left = (canvas.width - screenWidth) / 2
-                                    }
-                                    val right: Int = left + screenWidth
-                                    val bottom: Int = top + screenHeight
-
-                                    canvas.drawBitmap(
-                                        imageBitmap, Rect(0, 0, imageBitmap.width, imageBitmap.height),
-                                        Rect(left, top, right, bottom), null
-                                    )
-                                    screenSurfaceView.holder.unlockCanvasAndPost(canvas)
-                                }
-                                image.close()
-                            }
-                        }
-                    })
-                }
-                catch (e:InterruptedException)
-                {
-                    Log.d("old:","Interrupted")
-                }
-            }
-        hideSystemUI()
-
         screenSurfaceView=findViewById(R.id.screen)
         yuvConverter=YuvToRgbConverter(screenSurfaceView.context)
         var bundle=intent.getExtras()
         mainScreenSender =Device(bundle!!.getString("mainScreenSenderIp"))
+        GlobalStaticVariable.isScreenCapture=true
+        screenSurfaceView.holder.addCallback(object :SurfaceHolder.Callback{
+            override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
 
+            }
+            override fun surfaceCreated(p0: SurfaceHolder) {
+                GlobalStaticVariable.receiverSurface=p0.surface
+                FrameReceiverConnectThread=
+                    thread{
+                        try {
+                            FrameDataReceiver.open(null)
+                        }
+                        catch (e:InterruptedException)
+                        {
+                            Log.d("old:","Interrupted")
+                        }
+                    }
+            }
+            override fun surfaceDestroyed(p0: SurfaceHolder) {
+            }
+        })
+
+        hideSystemUI()
 
     }
     private fun hideSystemUI() {
@@ -107,6 +71,9 @@ class screenReceiverActivity  : AppCompatActivity() {
     }
     override fun onStop() {
         super.onStop()
+        FrameReceiverConnectThread?.let{
+            it.interrupt()
+        }
 //        FrameDataReceiver.close()
     }
 

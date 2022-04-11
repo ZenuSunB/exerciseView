@@ -93,10 +93,15 @@ class MainActivity :AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         // keep screen on while app is running
+
+        createFile()
+
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         hideSystemUI()
         var bundle=intent.getExtras()
         bundle?.getInt("isScreenProjection")?.let{
+            GlobalStaticVariable.frameRate=25
+            GlobalStaticVariable.isScreenCapture=true
             mainScreenReceiver=org.poseestimation.socketconnect.Device(bundle?.getString("screenReceiverIp"))
             screenProjectioninit()
         }
@@ -341,21 +346,22 @@ class MainActivity :AppCompatActivity() {
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~For Screen Projection~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     private fun screenProjectioninit()
     {
-        GlobalStaticVariable.frameRate=10
-        setOnImageAvailableListener(object :ImageReader.OnImageAvailableListener {
-            override fun onImageAvailable(mImageReader: ImageReader?) {
-                var image = mImageReader?.acquireLatestImage()
-                image?.let {
-                    encoder?.encoderH264(image)
-                    image?.close()
-                }
-            }
-        })
+
+//        setOnImageAvailableListener(object :ImageReader.OnImageAvailableListener {
+//            override fun onImageAvailable(mImageReader: ImageReader?) {
+//                var image = mImageReader?.acquireLatestImage()
+//                image?.let {
+//                    encoder?.encoderH264(image)
+//                    image?.close()
+//                }
+//            }
+//        })
         // get width and height
         encoder= EncoderH264(
             GlobalStaticVariable.frameLength,GlobalStaticVariable.frameWidth
             ,object : EncoderH264.EncoderListener{
                 override fun h264(data: ByteArray) {
+                    fos?.write(data)
                     Log.d("TAG","H264 SIZE:"+data.size)
                     mainScreenReceiver?.let {
                         sendFrameData(data,it)
@@ -390,6 +396,12 @@ class MainActivity :AppCompatActivity() {
                 )
             }
         }
+    }
+
+    private var fos:FileOutputStream?=null
+    private fun createFile()
+    {
+        fos = baseContext.openFileOutput("test.h264",Context.MODE_PRIVATE)
     }
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~For Screen Projection~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

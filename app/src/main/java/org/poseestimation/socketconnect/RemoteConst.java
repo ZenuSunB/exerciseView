@@ -21,7 +21,7 @@ public class RemoteConst {
 	 *
 	 * 设备搜索次数
 	 */
-	public static final int SEARCH_DEVICE_TIMES = 3;
+	public static final int SEARCH_DEVICE_TIMES = 9;
 	/**
 	 * 搜索的最大设备数量
 	 */
@@ -29,7 +29,7 @@ public class RemoteConst {
 	/**
      * 接收超时时间
 	 */
-	public static final int RECEIVE_TIME_OUT = 1000;
+	public static final int RECEIVE_TIME_OUT = 2000;
 
 	/**
 	 * udp数据包前缀

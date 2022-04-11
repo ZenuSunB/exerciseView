@@ -64,10 +64,9 @@ class slaveviewActivity : AppCompatActivity() {
         if(isScreenProjection)
         {
             val JsonObject=JSONObject(demand)
-
             GlobalStaticVariable.frameWidth=  JsonObject.getInt("Width")
             GlobalStaticVariable.frameLength= JsonObject.getInt("Length")
-            GlobalStaticVariable.frameRate=10
+            GlobalStaticVariable.frameRate=25
             isScreenProjection=false
             runOnUiThread {
                 val intent = Intent(baseContext, screenReceiverActivity::class.java)
@@ -86,7 +85,7 @@ class slaveviewActivity : AppCompatActivity() {
     //                openCamera()
                 }
                 "sendFrame" -> {
-    //                SystemClock.sleep(2000)
+                    SystemClock.sleep(80)
                     runOnUiThread {
                         val intent = Intent(baseContext, SenderActivity::class.java)
                         var hostIp = hostDevice!!.ip

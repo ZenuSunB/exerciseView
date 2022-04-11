@@ -103,6 +103,26 @@ class CameraSource(
     /** [Handler] corresponding to [imageReaderThread] */
     private var imageReaderHandler: Handler? = null
     private var cameraId: String = ""
+    @Volatile
+    private var isAlive:Boolean=true
+    //定时器设置
+    private var NewFrameGenerator = Timer().schedule(object :TimerTask(){
+        override fun run() {
+            if(!isAlive)
+            {
+                cancel()
+            }
+            var tempBitmap:Bitmap?=newestBitmap;
+            tempBitmap?.let{
+                processImage(tempBitmap)
+            }
+        }
+    },500,100)
+
+    @Volatile
+    private var newestBitmap:Bitmap?=null;
+    @Volatile
+    private var newestPersons: MutableList<Person>?=null;
 
     //语言播放器
     private val  voice=Voice(context)
@@ -160,7 +180,13 @@ class CameraSource(
                     imageBitmap, 0, 0, PREVIEW_WIDTH, PREVIEW_HEIGHT,
                     rotateMatrix, false
                 )
-                processImage(rotatedBitmap)
+//                processImage(rotatedBitmap)
+                newestBitmap=rotatedBitmap
+                var oldPersons = mutableListOf<Person>();
+                newestPersons?.let{
+                    oldPersons=it
+                }
+                visualize(oldPersons,rotatedBitmap)
                 image.close()
             }
         }, imageReaderHandler)
@@ -169,8 +195,8 @@ class CameraSource(
             session = createSession(listOf(surface))
 
             var cameraRequest = camera?.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
-            val fps: Range<Int> = Range.create(10,10)
-            cameraRequest?.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE,fps)
+//            val fps: Range<Int> = Range.create(10,10)
+//            cameraRequest?.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE,fps)
             cameraRequest?.addTarget(surface)
             cameraRequest?.build()?.let {
                 session?.setRepeatingRequest(it, null, null)
@@ -254,6 +280,7 @@ class CameraSource(
     }
 
     fun close() {
+        isAlive=false
         session?.close()
         session = null
         camera?.close()
@@ -315,7 +342,8 @@ class CameraSource(
                 }
             }
         }
-        visualize(persons, bitmap)
+        newestPersons=persons
+//        visualize(persons, bitmap)
     }
 
     private fun visualize(persons: List<Person>, bitmap: Bitmap) {

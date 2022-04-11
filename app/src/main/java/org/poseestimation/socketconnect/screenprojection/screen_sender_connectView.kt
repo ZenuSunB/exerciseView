@@ -20,6 +20,7 @@ import org.poseestimation.socketconnect.communication.host.Command
 import org.poseestimation.socketconnect.communication.host.CommandSender
 import org.poseestimation.socketconnect.communication.slave.FrameDataSender
 import org.poseestimation.socketconnect.search.DeviceSearcher
+import org.poseestimation.videodecoder.GlobalStaticVariable
 import kotlin.concurrent.thread
 
 
@@ -116,16 +117,15 @@ class screen_sender_connectView  : AppCompatActivity()  {
                             var uuid = view.getTag() as String
                             devices.get(uuid)?.let {
                                 var JsonObj=JSONObject()
-                                // get width and height
-//                                JsonObj.put("Width",Resources.getSystem().displayMetrics.heightPixels)
-//                                JsonObj.put("Length",Resources.getSystem().displayMetrics.widthPixels)
-                                JsonObj.put("Width",640)
-                                JsonObj.put("Length",480)
-                                sendCommand(it,"prepareAcceptFrame",)
+                                GlobalStaticVariable.frameWidth=Resources.getSystem().displayMetrics.heightPixels
+                                GlobalStaticVariable.frameLength=Resources.getSystem().displayMetrics.widthPixels
+                                JsonObj.put("Width",GlobalStaticVariable.frameWidth)
+                                JsonObj.put("Length",GlobalStaticVariable.frameLength)
+                                sendCommand(it,"prepareAcceptFrame")
                                 SystemClock.sleep(100)
                                 sendCommand(it,JsonObj.toString())
                             }
-                            SystemClock.sleep(150)
+                            SystemClock.sleep(300)
                             thread {
                                 FrameDataSender.open(devices.get(uuid))
                             }

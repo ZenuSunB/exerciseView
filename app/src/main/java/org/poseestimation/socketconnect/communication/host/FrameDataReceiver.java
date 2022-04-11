@@ -49,11 +49,11 @@ public class FrameDataReceiver {
     public static void open(FrameDataReceiver.FrameDataListener frameDataListener)
     {
         try {
-            Log.d("TAG", "open: ++++++++++++++++++++++111");
+            Log.d("TAG", "open: 11111111111111111111111111");
             serverSocket = new ServerSocket(RemoteConst.FRAME_RECEIVE_PORT);
             socket = serverSocket.accept();
             is = new DataInputStream(socket.getInputStream());
-            Log.d("TAG", "open: ++++++++++++++++++++++222");
+            Log.d("TAG", "open: 11111111111111111111122222");
         }
         catch (IOException e)
         {
@@ -61,7 +61,7 @@ public class FrameDataReceiver {
         }
         listener = frameDataListener;
         isOpen = true;
-        decoder=new DecoderH264(GlobalStaticVariable.Companion.getFrameWidth(), GlobalStaticVariable.Companion.getFrameLength(),
+        decoder=new DecoderH264(GlobalStaticVariable.Companion.getFrameLength(), GlobalStaticVariable.Companion.getFrameWidth(),
                 new DecoderH264.DecoderListener() {
             @Override
             public void YUV420(@Nullable Image image) {
@@ -105,11 +105,11 @@ public class FrameDataReceiver {
                                     FrameLengthOffSet++;
                                 }
                                 assert FrameLengthOffSet == 4;
-
                                 byte[] resData = new byte[FrameLength];
                                 is.readFully(resData);
 
                                 if (decoder != null) {
+                                    Log.d("TTTTTT", "dataBytes: "+resData.length);
                                     decoder.decoderH264(resData);
                                 }
                                 FrameLength = 0;

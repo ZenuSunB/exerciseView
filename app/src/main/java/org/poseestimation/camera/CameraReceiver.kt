@@ -85,11 +85,12 @@ class CameraReceiver(
 
     //初期检测人是否在摄像头内部
     private var isPersonDetect:Boolean=false
-
+    @Volatile
+    private var isAlive:Boolean=true
     //定时器设置
     private var NewFrameGenerator = Timer().schedule(object :TimerTask(){
         override fun run() {
-            if(detector==null)
+            if(!isAlive)
             {
                 cancel()
             }
@@ -139,9 +140,11 @@ class CameraReceiver(
     }
 
     fun close() {
+        isAlive=false
         detector?.close()
         detector = null
         isPersonDetect=true
+
     }
 
     //process image
