@@ -32,7 +32,7 @@ class screen_sender_connectView  : AppCompatActivity()  {
     lateinit var btnSearchDeviceOpen : Button
     lateinit var receiverList: ListView
     lateinit var btnReturn: BackArrowView
-
+    var JsonMeg_Intent:String?=null
     var isSearchDeviceOpen:Boolean=false;
     var devices: MutableMap<String, Device> = mutableMapOf()
     var choosed_device:Device?=null
@@ -56,6 +56,11 @@ class screen_sender_connectView  : AppCompatActivity()  {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.screen_projection_launcher)
+        var bundle=intent.getExtras()
+        bundle?.getString("ExerciseScheduleMesg")?.let{
+            JsonMeg_Intent=it
+        }
+
         btnReturn=findViewById(R.id.back_arrow)
         btnSearchDeviceOpen=this.findViewById(R.id.connectBtn)
         btnReturn=this.findViewById(R.id.back_arrow)
@@ -138,7 +143,9 @@ class screen_sender_connectView  : AppCompatActivity()  {
                             val intent = Intent(baseContext, MainActivity::class.java)
                             intent.putExtra("isScreenProjection", true)
                             intent.putExtra("screenReceiverIp", devices.get(uuid)!!.ip)
-
+                            JsonMeg_Intent?.let {
+                                intent.putExtra("ExerciseScheduleMesg", it)
+                            }
                             clear()
                             stopSearch()
                             isSearchDeviceOpen = false

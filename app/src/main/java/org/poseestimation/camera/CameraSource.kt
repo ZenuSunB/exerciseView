@@ -313,7 +313,7 @@ class CameraSource(
                     //捕获当前帧中的用户关节点
                     persons.addAll(it)
                     //捕获对应时刻的标准动作关节点
-                    persons.addAll(Samples[index].getPersonNow(it[0].keyPoints[0].coordinate.x.toDouble(),it[0].keyPoints[0].coordinate.y.toDouble()))
+//                    persons.addAll(Samples[index].getPersonNow(it[0].keyPoints[0].coordinate.x.toDouble(),it[0].keyPoints[0].coordinate.y.toDouble()))
                     //如果获取的帧可信，则处理
                     if (it.get(0).isTrust()) {
                         //输入用户关节点动作，进行计算

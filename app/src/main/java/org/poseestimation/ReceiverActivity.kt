@@ -122,7 +122,7 @@ class ReceiverActivity: AppCompatActivity() {
     private fun initView(){
 
         val mainActivity=this
-        val JsonMeg="{\n" +
+        var JsonMeg="{\n" +
                 "    \"id\": 1,\n"+
                 "    \"data\": [\n" +
                 "        {\n" +
@@ -135,6 +135,10 @@ class ReceiverActivity: AppCompatActivity() {
                 "            \"url\": \"sample7\",\n" +
                 "            \"groups\": \"2\"\n" +
                 "        }]}"
+        var bundle=intent.getExtras()
+        bundle?.getString("ExerciseScheduleMesg")?.let{
+            JsonMeg=it
+        }
 
         videoviewrepetend= VideoViewRepetend(JsonMeg,this,videoView,countdownView,countdownViewFramLayout,this.baseContext,object:VideoViewRepetend.VideoViewRepetendListener{
             override fun onExerciseEnd(index:Int,samplevideoName:String,samplevideoTendency:MutableList<Int>,id:Int) {

@@ -152,6 +152,7 @@ class DTWprocess {
         var y:Int=N-1
         while(x!=-1&&y!=-1)
         {
+            println("+"+x+" "+y)
             path_list.add(Pair<Int,Int>(x,y))
             val tempX=x
             val tempY=y

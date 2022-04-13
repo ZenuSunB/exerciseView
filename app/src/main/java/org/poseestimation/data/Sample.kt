@@ -198,9 +198,6 @@ class Sample(
                 fake_tempScoreByPart[j] =dis.first //fake
                 true_tempScoreByPart[j] =dis.second//true
                 fake_tempMarkScore += bodyWeight[j] * fake_tempScoreByPart[j]
-//                println("+++++++++1"+PartMap[j]+" false: "+fake_tempScoreByPart[j])
-                if(j==1||j==2)
-                    println("+++++++++2"+PartMap[j]+" true: "+true_tempScoreByPart[j])
             }
             if (fake_tempMarkScore > fake_markScore)
             {

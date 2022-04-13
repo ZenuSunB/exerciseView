@@ -161,7 +161,8 @@ class MainActivity :AppCompatActivity() {
 
     private fun initView(){
         val mainActivity=this
-        val JsonMeg      ="{\n" +
+
+        var JsonMeg      ="{\n" +
                 "    \"id\": 1,\n"+
                 "    \"data\": [\n" +
                 "        {\n" +
@@ -182,6 +183,11 @@ class MainActivity :AppCompatActivity() {
 //                "            \"url\": \"sample24\",\n" +
 //                "            \"groups\": \"2\"\n" +
 //                "        }]}"
+        var bundle=intent.getExtras()
+        bundle?.getString("ExerciseScheduleMesg")?.let{
+            JsonMeg=it
+        }
+
         videoviewrepetend= VideoViewRepetend(JsonMeg,this,videoView,countdownView,countdownViewFramLayout,this.baseContext,object:VideoViewRepetend.VideoViewRepetendListener{
             override fun onExerciseEnd(index:Int,samplevideoName:String,samplevideoTendency:MutableList<Int>,id:Int) {
                 //一轮运动完成，开始创建下一轮运动的数据结构

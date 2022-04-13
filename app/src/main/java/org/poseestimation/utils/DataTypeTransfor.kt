@@ -291,27 +291,6 @@ class DataTypeTransfor {
 }
 fun main(args: Array<String>)
 {
-//    var persons = arrayListOf<Person>()
-//
-//    for (i in 0..5)
-//    {
-//        var person:Person=Person(keyPoints = arrayListOf<KeyPoint>(),
-//                                 score = 100.0.toFloat())
-//        var p:PointF= PointF(1.0.toFloat(),2.0.toFloat())
-//        for (j in 0..16)
-//        {
-//
-//            var points: MutableList<KeyPoint> = arrayListOf<KeyPoint>()
-//            points.add(
-//                KeyPoint(
-//                    bodyPart = BodyPart.LEFT_ANKLE,
-//                    coordinate = PointF(j.toFloat(), j.toFloat()),
-//                    score = 100.toFloat()
-//                ))
-//             person = Person(keyPoints = points,
-//                                score = 100.0.toFloat())
-//        }
-//        persons.add(person)
-//    }
+
 
 }

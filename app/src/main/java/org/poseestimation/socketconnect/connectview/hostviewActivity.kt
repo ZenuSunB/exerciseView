@@ -26,7 +26,7 @@ class hostviewActivity: AppCompatActivity() {
     var isSearchDeviceOpen:Boolean=false;
     var devices: MutableMap<String, Device> = mutableMapOf()
     var choosed_device:Device?=null
-
+    var JsonMeg_Intent:String?=null
     fun sendCommand(device: Device,str:String) {
         //发送命令
         val command = Command(str.toByteArray(), object : Command.Callback {
@@ -44,6 +44,12 @@ class hostviewActivity: AppCompatActivity() {
     }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        var bundle=intent.getExtras()
+        bundle?.getString("ExerciseScheduleMesg")?.let{
+            JsonMeg_Intent=it
+        }
+
         setContentView(R.layout.remote_camera_launcher)
         btnSearchDeviceOpen=this.findViewById(R.id.connectBtn)
         btnReturn=this.findViewById(R.id.back_arrow)
@@ -115,6 +121,9 @@ class hostviewActivity: AppCompatActivity() {
                             var slaveIp=devices.get(uuid)!!.ip
                             val intent = Intent(baseContext, ReceiverActivity::class.java)
                             intent.putExtra("slaveIp",slaveIp)
+                            JsonMeg_Intent?.let {
+                                intent.putExtra("ExerciseScheduleMesg", it)
+                            }
                             //状态清空
                             clear()
                             stopSearch()
