@@ -11,12 +11,21 @@ class Voice(private val context: Context) {
 
     companion object{
         @Volatile
-        public var voicePlayer= MediaPlayer()
+        public var voicePlayer:MediaPlayer= MediaPlayer()
         public val lock = Any()
+        public var isClose=false;
+        @Synchronized
+        fun close()
+        {
+            voicePlayer.stop()
+            isClose=true
+        }
     }
 
     public fun voicePraise(FrameScore: Int,part:Int)
     {
+        if(isClose)
+            return
         synchronized(lock)
         {
             var voicePath = "voice/great/"
@@ -36,7 +45,8 @@ class Voice(private val context: Context) {
     }
     public fun voiceRemind(FrameScore: Int,part:Int)
     {
-
+        if(isClose)
+            return
         synchronized(lock)
         {
             var voicePath = "voice/"
@@ -92,6 +102,8 @@ class Voice(private val context: Context) {
     }
     public fun voiceTips()
     {
+        if(isClose)
+            return
         synchronized(lock)
         {
             var voicePath = "voice/tips/"
@@ -108,6 +120,8 @@ class Voice(private val context: Context) {
     }
     public fun voiceCountDown()
     {
+        if(isClose)
+            return
         synchronized(lock)
         {
             var voicePath = "voice/countdown/"
@@ -124,6 +138,8 @@ class Voice(private val context: Context) {
     }
     public fun voiceRest()
     {
+        if(isClose)
+            return
         synchronized(lock)
         {
             var voicePath = "voice/rest/"

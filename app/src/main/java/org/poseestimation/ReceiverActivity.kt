@@ -35,6 +35,7 @@ import org.poseestimation.socketconnect.communication.host.CommandSender
 import org.poseestimation.socketconnect.communication.host.FrameDataReceiver
 import org.poseestimation.socketconnect.communication.slave.FrameDataSender
 import org.poseestimation.socketconnect.connectpopview.hostPopView
+import org.poseestimation.utils.Voice
 import java.io.FileOutputStream
 import kotlin.concurrent.thread
 import kotlin.math.log
@@ -206,11 +207,12 @@ class ReceiverActivity: AppCompatActivity() {
     }
 
     override fun onPause() {
+        super.onPause()
         cameraReceiver?.pause()
 //        videoviewrepetend?.videoView?.pause()
         cameraReceiver?.close()
         FrameDataReceiver.close()
-        super.onPause()
+
     }
 
     override fun onStop() {
@@ -221,6 +223,13 @@ class ReceiverActivity: AppCompatActivity() {
         FrameReceiverConnectThread?.let{
             it.interrupt()
         }
+        Voice.close()
+
+        val intent : Intent = Intent();
+        intent.putExtra("state", "finish");
+        setResult(RESULT_OK, intent)
+        finish()
+
     }
 
     // check if permission is granted or not.

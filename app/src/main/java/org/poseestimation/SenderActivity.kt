@@ -4,6 +4,7 @@ import android.Manifest
 import android.app.AlertDialog
 import android.app.Dialog
 import android.content.DialogInterface
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.os.Process
@@ -59,6 +60,12 @@ class SenderActivity :AppCompatActivity() {
         if (!isCameraPermissionGranted()) {
             requestPermission()
         }
+        //开始接受通信命令
+        CommandReceiver.start(object : CommandReceiver.CommandListener{
+            override fun onReceive(command: String?) {
+                commandResolver(command)
+            }
+        })
         thread {
             FrameDataSender.open(mainHost)
         }
@@ -66,7 +73,17 @@ class SenderActivity :AppCompatActivity() {
 
 
     }
-
+    private fun commandResolver(demand:String?)
+    {
+        when(demand) {
+            "finishSendFrame" -> {
+                CommandReceiver.close()
+                finish()
+            }
+            null -> {
+            }
+        }
+    }
     override fun onResume() {
         cameraSender?.resume()
         super.onResume()
@@ -83,6 +100,7 @@ class SenderActivity :AppCompatActivity() {
 //        slavepopView.dismiss()
         cameraSender?.close()
         FrameDataSender.close()
+
     }
 
 

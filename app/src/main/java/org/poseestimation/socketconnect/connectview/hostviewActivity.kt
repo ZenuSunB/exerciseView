@@ -17,14 +17,19 @@ import org.poseestimation.socketconnect.search.DeviceSearcher
 
 
 class hostviewActivity: AppCompatActivity() {
+
+    private val REQUEST_CODE = 1
+
     lateinit var btnSearchDeviceOpen : Button
     lateinit var slaveList: ListView
     lateinit var btnReturn:BackArrowView
     var isSearchDeviceOpen:Boolean=false;
     var devices: MutableMap<String, Device> = mutableMapOf()
-    fun sendCommand(device: Device) {
+    var choosed_device:Device?=null
+
+    fun sendCommand(device: Device,str:String) {
         //发送命令
-        val command = Command("openCamera".toByteArray(), object : Command.Callback {
+        val command = Command(str.toByteArray(), object : Command.Callback {
             override fun onEcho(msg: String?) {
             }
             override fun onError(msg: String?) {
@@ -37,15 +42,13 @@ class hostviewActivity: AppCompatActivity() {
         command.setDestIp(device.ip)
         CommandSender.addCommand(command)
     }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         setContentView(R.layout.remote_camera_launcher)
         btnSearchDeviceOpen=this.findViewById(R.id.connectBtn)
         btnReturn=this.findViewById(R.id.back_arrow)
         btnReturn.setOnClickListener{
-            System.exit(0)
+            finish()
         }
         slaveList=this.findViewById(R.id.slavelist)
         btnSearchDeviceOpen.setOnClickListener{
@@ -105,22 +108,35 @@ class hostviewActivity: AppCompatActivity() {
                         override fun onClick(view: View) {
                             var uuid = view.getTag() as String
                             devices.get(uuid)?.let {
-                                sendCommand(it)
+                                choosed_device=it
+                                sendCommand(it,"openCamera")
                             }
-                            val intent = Intent(baseContext, ReceiverActivity::class.java)
+
                             var slaveIp=devices.get(uuid)!!.ip
+                            val intent = Intent(baseContext, ReceiverActivity::class.java)
                             intent.putExtra("slaveIp",slaveIp)
+                            //状态清空
                             clear()
                             stopSearch()
                             isSearchDeviceOpen = false
                             btnSearchDeviceOpen.setText("开始搜索")
-                            startActivity(intent)
+                            //跳转并等待返回REQUEST_CODE
+                            startActivityForResult(intent,REQUEST_CODE)
                         }
                     })
                     slaveList.adapter=adapter
                 }
             }
         })
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == REQUEST_CODE) {
+            choosed_device?.let {
+                sendCommand(it, "finishSendFrame")
+            }
+        }
     }
     private fun stopSearch() {
         DeviceSearcher.close()

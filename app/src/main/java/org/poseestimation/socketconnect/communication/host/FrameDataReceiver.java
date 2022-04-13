@@ -49,11 +49,9 @@ public class FrameDataReceiver {
     public static void open(FrameDataReceiver.FrameDataListener frameDataListener)
     {
         try {
-            Log.d("TAG", "open: 11111111111111111111111111");
             serverSocket = new ServerSocket(RemoteConst.FRAME_RECEIVE_PORT);
             socket = serverSocket.accept();
             is = new DataInputStream(socket.getInputStream());
-            Log.d("TAG", "open: 11111111111111111111122222");
         }
         catch (IOException e)
         {

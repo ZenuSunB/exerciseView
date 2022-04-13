@@ -15,6 +15,7 @@ import org.poseestimation.MainActivity
 import org.poseestimation.R
 import org.poseestimation.layoutImpliment.BackArrowView
 import org.poseestimation.layoutImpliment.connectAdapter
+import org.poseestimation.service.screenCaptureService
 import org.poseestimation.socketconnect.Device
 import org.poseestimation.socketconnect.communication.host.Command
 import org.poseestimation.socketconnect.communication.host.CommandSender
@@ -26,6 +27,7 @@ import kotlin.concurrent.thread
 
 class screen_sender_connectView  : AppCompatActivity()  {
 
+    private val REQUEST_CODE = 1
 
     lateinit var btnSearchDeviceOpen : Button
     lateinit var receiverList: ListView
@@ -33,7 +35,7 @@ class screen_sender_connectView  : AppCompatActivity()  {
 
     var isSearchDeviceOpen:Boolean=false;
     var devices: MutableMap<String, Device> = mutableMapOf()
-
+    var choosed_device:Device?=null
     fun sendCommand(device: Device,str:String) {
         //发送命令
         val command = Command(str.toByteArray(), object : Command.Callback {
@@ -50,6 +52,7 @@ class screen_sender_connectView  : AppCompatActivity()  {
         CommandSender.addCommand(command)
     }
 
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.screen_projection_launcher)
@@ -57,7 +60,7 @@ class screen_sender_connectView  : AppCompatActivity()  {
         btnSearchDeviceOpen=this.findViewById(R.id.connectBtn)
         btnReturn=this.findViewById(R.id.back_arrow)
         btnReturn.setOnClickListener{
-            System.exit(0)
+            finish()
         }
 
         receiverList=this.findViewById(R.id.slavelist)
@@ -88,6 +91,7 @@ class screen_sender_connectView  : AppCompatActivity()  {
 
     override fun onResume() {
         super.onResume()
+
     }
 
     override fun onPause() {
@@ -116,6 +120,7 @@ class screen_sender_connectView  : AppCompatActivity()  {
                         override fun onClick(view: View) {
                             var uuid = view.getTag() as String
                             devices.get(uuid)?.let {
+                                choosed_device=it
                                 var JsonObj=JSONObject()
                                 GlobalStaticVariable.frameWidth=Resources.getSystem().displayMetrics.heightPixels
                                 GlobalStaticVariable.frameLength=Resources.getSystem().displayMetrics.widthPixels
@@ -129,20 +134,32 @@ class screen_sender_connectView  : AppCompatActivity()  {
                             thread {
                                 FrameDataSender.open(devices.get(uuid))
                             }
+
                             val intent = Intent(baseContext, MainActivity::class.java)
                             intent.putExtra("isScreenProjection", true)
                             intent.putExtra("screenReceiverIp", devices.get(uuid)!!.ip)
+
                             clear()
                             stopSearch()
                             isSearchDeviceOpen = false
                             btnSearchDeviceOpen.setText("开始搜索")
-                            startActivity(intent)
+
+                            startActivityForResult(intent,REQUEST_CODE)
                         }
                     })
                     receiverList.adapter=adapter
                 }
             }
         })
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == REQUEST_CODE) {
+            choosed_device?.let {
+                sendCommand(it, "finishAcceptFrame")
+            }
+        }
     }
     private fun stopSearch() {
         DeviceSearcher.close()
