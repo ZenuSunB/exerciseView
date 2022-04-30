@@ -1,8 +1,10 @@
 package org.poseestimation.socketconnect.connectview
 
 import android.content.Intent
+import android.content.res.Resources
 import android.os.Bundle
 import android.os.SystemClock
+import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.ListView
@@ -15,6 +17,7 @@ import org.poseestimation.SenderActivity
 import org.poseestimation.layoutImpliment.BackArrowView
 import org.poseestimation.screenReceiverActivity
 import org.poseestimation.socketconnect.Device
+import org.poseestimation.socketconnect.communication.host.FrameDataReceiver
 import org.poseestimation.socketconnect.communication.slave.CommandReceiver
 import org.poseestimation.socketconnect.search.DeviceSearchResponser
 import org.poseestimation.videodecoder.GlobalStaticVariable
@@ -23,7 +26,6 @@ class slaveviewActivity : AppCompatActivity() {
     lateinit var btnListeningOpen : Button
     lateinit var hostList: ListView
     lateinit var btnReturn: BackArrowView
-    var isScreenProjection:Boolean=false
     var isListeningOpen:Boolean=false;
     var hostDevice: Device?=null
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -55,31 +57,12 @@ class slaveviewActivity : AppCompatActivity() {
     }
     private fun commandResolver(demand:String?)
     {
-        if(isScreenProjection)
-        {
-            val JsonObject=JSONObject(demand)
-            GlobalStaticVariable.frameWidth=  JsonObject.getInt("Width")
-            GlobalStaticVariable.frameLength= JsonObject.getInt("Length")
-            GlobalStaticVariable.frameRate=25
-            isScreenProjection=false
-            runOnUiThread {
-                val intent = Intent(baseContext, screenReceiverActivity::class.java)
-                var hostIp = hostDevice!!.ip
-                intent.putExtra("mainScreenSenderIp", hostIp)
-                CommandReceiver.close()
-                isListeningOpen = false
-                btnListeningOpen.setText("开始监听")
-                startActivity(intent)
-            }
-        }
-        else
-        {
             when(demand) {
                 "openCamera" -> {
     //                openCamera()
                 }
                 "sendFrame" -> {
-                    SystemClock.sleep(80)
+                    SystemClock.sleep(200)
                     runOnUiThread {
                         val intent = Intent(baseContext, SenderActivity::class.java)
                         var hostIp = hostDevice!!.ip
@@ -92,12 +75,24 @@ class slaveviewActivity : AppCompatActivity() {
                     }
                 }
                 "prepareAcceptFrame" -> {
-                    isScreenProjection = true
+                    GlobalStaticVariable.reSet()
+                    GlobalStaticVariable.frameRate=25
+                    FrameDataReceiver.close()
+                    runOnUiThread {
+                        val intent = Intent(baseContext, screenReceiverActivity::class.java)
+                        var hostIp = hostDevice!!.ip
+                        intent.putExtra("mainScreenSenderIp", hostIp)
+                        CommandReceiver.close()
+                        stopListen()
+                        isListeningOpen = false
+                        btnListeningOpen.setText("开始监听")
+                        startActivity(intent)
+                    }
                 }
+
                 null -> {
                 }
             }
-        }
     }
     override fun onStop() {
         super.onStop()
@@ -105,7 +100,6 @@ class slaveviewActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        println("88888")
         //开始接受通信命令
         CommandReceiver.start(object : CommandReceiver.CommandListener{
             override fun onReceive(command: String?) {
@@ -141,6 +135,20 @@ class slaveviewActivity : AppCompatActivity() {
             }
         })
 
+    }
+    private fun hideSystemUI() {
+        // Enables regular immersive mode.
+        // For "lean back" mode, remove SYSTEM_UI_FLAG_IMMERSIVE.
+        // Or for "sticky immersive," replace it with SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+        window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_IMMERSIVE
+                // Set the content to appear under the system bars so that the
+                // content doesn't resize when the system bars hide and show.
+                or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                // Hide the nav bar and status bar
+                or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                or View.SYSTEM_UI_FLAG_FULLSCREEN)
     }
     public fun stopListen() {
         DeviceSearchResponser.close()

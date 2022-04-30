@@ -118,6 +118,14 @@ class ExerciseSchedule(JSONmeg:String) {
         {
             return size
         }
+        fun reSet()
+        {
+            id=-1
+            size=0;
+            exerciseName.clear()
+            exerciseId.clear()
+            exerciseGroups.clear()
+        }
     }
 
     private val meg:String=JSONmeg

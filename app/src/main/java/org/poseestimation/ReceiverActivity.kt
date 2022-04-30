@@ -6,7 +6,9 @@ import android.app.Dialog
 import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
+import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
@@ -54,8 +56,11 @@ class ReceiverActivity: AppCompatActivity() {
     private var device = org.poseestimation.data.Device.GPU
     private lateinit var msquareProgress: SquareProgress
     private lateinit var videoView: VideoView
+
     private lateinit var countdownView: SurfaceView
     private lateinit var countdownViewFramLayout: FrameLayout
+    private lateinit var countdownViewBackground: ImageView
+
     private var cameraReceiver: CameraReceiver? = null
     private val voice= org.poseestimation.utils.Voice(this)
     private var videoviewrepetend: VideoViewRepetend? =null
@@ -88,6 +93,9 @@ class ReceiverActivity: AppCompatActivity() {
         CommandSender.addCommand(command)
     }
 
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_receiver)
@@ -102,15 +110,11 @@ class ReceiverActivity: AppCompatActivity() {
         surfaceView = findViewById(R.id.surfaceView)
         videoView = findViewById(R.id.videoView)
         countdownViewFramLayout=findViewById(R.id.countDownViewLayout)
+        countdownViewBackground=findViewById(R.id.mColor)
         scoreTextView=findViewById(R.id.score)
-
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R ||
-            Environment.isExternalStorageManager()) {
-            Toast.makeText(this, "已获得访问所有文件的权限", Toast.LENGTH_SHORT).show();
-        } else {
-            var intent: Intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
-            startActivity(intent);
-        }
+        //—————————————————————初始化语音—————————————————————————————//
+        Voice.reSet()
+        //————————————————————————————————————————————-————————————//
 
 
         initView()
@@ -140,7 +144,7 @@ class ReceiverActivity: AppCompatActivity() {
             JsonMeg=it
         }
 
-        videoviewrepetend= VideoViewRepetend(JsonMeg,this,videoView,countdownView,countdownViewFramLayout,this.baseContext,object:VideoViewRepetend.VideoViewRepetendListener{
+        videoviewrepetend= VideoViewRepetend(JsonMeg,this,videoView,countdownView,countdownViewFramLayout,countdownViewBackground,this.baseContext,object:VideoViewRepetend.VideoViewRepetendListener{
             override fun onExerciseEnd(index:Int,samplevideoName:String,samplevideoTendency:MutableList<Int>,id:Int) {
                 //一轮运动完成，开始创建下一轮运动的数据结构
                 //休息阶段时关闭图像处理
@@ -197,43 +201,32 @@ class ReceiverActivity: AppCompatActivity() {
                     }
                     TotalReturnData.put("id",ExerciseSchedule.getTotalId())
                     TotalReturnData.put("data",TotalReturnValue)
-                    writeTofile("test",TotalReturnData.toString())
+
+                    val intent : Intent = Intent();
+                    intent.putExtra("state", "finish");
+                    setResult(RESULT_OK, intent)
+                    finish()
                 }
-                cameraReceiver!!.index++
             }
         })
     }
 
     override fun onResume() {
         cameraReceiver?.resume()
-//        videoviewrepetend?.videoView?.start()
         super.onResume()
     }
 
     override fun onPause() {
         super.onPause()
         cameraReceiver?.pause()
-//        videoviewrepetend?.videoView?.pause()
         cameraReceiver?.close()
-        FrameDataReceiver.close()
-
     }
 
     override fun onStop() {
         super.onStop()
-//        hostpopView.dismiss()
         cameraReceiver?.close()
-        FrameDataReceiver.close()
-        FrameReceiverConnectThread?.let{
-            it.interrupt()
-        }
+        FrameReceiverConnectThread?.interrupt()
         Voice.close()
-
-        val intent : Intent = Intent();
-        intent.putExtra("state", "finish");
-        setResult(RESULT_OK, intent)
-        finish()
-
     }
 
     // check if permission is granted or not.
@@ -272,9 +265,6 @@ class ReceiverActivity: AppCompatActivity() {
                         ExerciseSchedule.getName(videoviewrepetend!!.index),
                         //*************************************************************
                         ExerciseSchedule.getId(0)).apply {
-                        FrameReceiverConnectThread?.let{
-                            it.interrupt()
-                        }
                         FrameReceiverConnectThread=
                             thread{
                                 try {
@@ -320,6 +310,7 @@ class ReceiverActivity: AppCompatActivity() {
             }
         }
     }
+
     override fun onKeyDown(keyCode:Int, event: KeyEvent?):Boolean {
         // TODO Auto-generated method stub
         if(keyCode== KeyEvent.KEYCODE_BACK){
@@ -328,6 +319,9 @@ class ReceiverActivity: AppCompatActivity() {
                 .setMessage(msg)
                 .setTitle("注意")
                 .setPositiveButton("确认", DialogInterface.OnClickListener { dialogInterface, i ->
+                    val intent : Intent = Intent();
+                    intent.putExtra("state", "finish")
+                    setResult(RESULT_CANCELED, intent)
                     finish()
                 })
                 .setNeutralButton("取消", null)

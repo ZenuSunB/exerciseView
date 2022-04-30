@@ -2,13 +2,18 @@ package org.poseestimation.data
 
 import android.app.Activity
 import android.content.Context
+import android.graphics.Color
 import android.media.MediaPlayer
 import android.net.Uri
 import android.view.*
 import android.widget.FrameLayout
+import android.widget.ImageView
+import android.widget.Toast
 import android.widget.VideoView
+import androidx.annotation.UiThread
 import androidx.constraintlayout.widget.Constraints
 import androidx.coordinatorlayout.widget.CoordinatorLayout
+import org.poseestimation.R
 import org.poseestimation.utils.Voice
 import java.util.*
 
@@ -19,6 +24,7 @@ class VideoViewRepetend(
     private var videoView: VideoView,
     private var countdownView: SurfaceView,
     private var countdownViewFramLayout:FrameLayout,
+    private var countdownBackground:ImageView,
     private var context: Context,
     private var listener: VideoViewRepetendListener?=null)
 {
@@ -41,6 +47,7 @@ class VideoViewRepetend(
     //记录下当前播放到那哪一组运动视频
     public var index=0
     init {
+        countdownBackground.setImageDrawable(context.resources.getDrawable(R.drawable.blackback))
         schedule=ExerciseSchedule(JSONmeg)
         //设置倒计时结束后，倒计时界面隐藏
         countDownHide()
@@ -91,6 +98,22 @@ class VideoViewRepetend(
                 }
                 else
                 {
+                    //运动finish，播放分析视频.
+                    val analysisId = context.resources.getIdentifier("analysis","raw", context.getPackageName() )
+                    setCountView(analysisId)
+                    //设置分析视频界面显示
+                    countDownShow()
+                    mainActivity.runOnUiThread(java.lang.Runnable {
+                        Toast.makeText(context,"运动数据报告生成中",Toast.LENGTH_LONG).show()
+                    })
+                    countdownBackground.setImageDrawable(context.resources.getDrawable(R.drawable.whiteback))
+                    countDountMp?.setOnCompletionListener {
+                        val analysisId = context.resources.getIdentifier("analysis","raw", context.getPackageName() )
+                        setCountView(analysisId)
+                        //设置分析视频界面显示
+                        countDountMp?.start()
+                    }
+                    countDountMp?.start()
                     //运动视频播放完毕，退出运动界面
                     listener?.onExerciseFinish(index)//运动结束触发
                 }
@@ -154,7 +177,9 @@ class VideoViewRepetend(
     {
         countdownView.visibility = View.VISIBLE
         countdownViewFramLayout.visibility= View.VISIBLE
+
     }
+
     private fun countDownHide()
     {
         countdownView.visibility = View.INVISIBLE

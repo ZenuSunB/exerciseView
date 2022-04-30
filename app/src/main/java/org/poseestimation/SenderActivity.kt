@@ -5,7 +5,9 @@ import android.app.AlertDialog
 import android.app.Dialog
 import android.content.DialogInterface
 import android.content.Intent
+import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.os.Bundle
 import android.os.Process
 import android.os.SystemClock
@@ -73,6 +75,9 @@ class SenderActivity :AppCompatActivity() {
 
 
     }
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+    }
     private fun commandResolver(demand:String?)
     {
         when(demand) {
@@ -91,7 +96,6 @@ class SenderActivity :AppCompatActivity() {
 
     override fun onPause() {
         cameraSender?.pause()
-
         super.onPause()
     }
 

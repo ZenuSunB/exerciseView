@@ -106,19 +106,24 @@ class CameraSource(
     @Volatile
     private var isAlive:Boolean=true
     //定时器设置
-    private var NewFrameGenerator = Timer().schedule(object :TimerTask(){
+    private var NewFrameGenerator:Timer?=null
+    //定时器事件设置
+    private var timerTask:TimerTask?=object :TimerTask(){
         override fun run() {
-            if(!isAlive)
-            {
-                cancel()
+            try {
+                if (!isAlive)
+                    cancel()
+                var tempBitmap: Bitmap? = newestBitmap;
+                tempBitmap?.let {
+                    processImage(tempBitmap)
+                }
             }
-            var tempBitmap:Bitmap?=newestBitmap;
-            tempBitmap?.let{
-                processImage(tempBitmap)
+            catch (e:Throwable)
+            {
+                e.printStackTrace()
             }
         }
-    },500,100)
-
+    }
     @Volatile
     private var newestBitmap:Bitmap?=null;
     @Volatile
@@ -144,7 +149,8 @@ class CameraSource(
     //初始化摄像机，并设置监听器
     suspend fun initCamera() {
         camera = openCamera(cameraManager, cameraId)
-
+        NewFrameGenerator = Timer()
+        NewFrameGenerator?.schedule(timerTask,500,100)
         Samples.add(Sample(firstSamplevideoName+".processed.json",context,firstSamplevideoId,firstSamplevideoTendency,object:Sample.scorelistener{
             override fun onFrameScoreHeight(FrameScore: Int,part:Int) {
                 voice.voicePraise(FrameScore,part)
@@ -280,6 +286,11 @@ class CameraSource(
     }
 
     fun close() {
+        isImageprocess=false
+        timerTask?.cancel()
+        timerTask=null
+        NewFrameGenerator?.cancel()
+        NewFrameGenerator=null
         isAlive=false
         session?.close()
         session = null

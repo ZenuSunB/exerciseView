@@ -20,6 +20,12 @@ class Voice(private val context: Context) {
             voicePlayer.stop()
             isClose=true
         }
+        @Synchronized
+        fun reSet()
+        {
+            isClose=false
+
+        }
     }
 
     public fun voicePraise(FrameScore: Int,part:Int)

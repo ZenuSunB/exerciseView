@@ -18,10 +18,18 @@ public class RemoteConst {
 	 */
 	public static final int FRAME_SENDER_PORT = 10087;
 	/**
+	 * 用于接收wear心率数据的端口
+	 */
+	public static final int WEARMESG_RECEIVE_PORT = 10286;
+	/**
+	 * 用于接收wear心率数据的端口
+	 */
+	public static final int WEARMESG_SENDER_PORT = 10287;
+	/**
 	 *
 	 * 设备搜索次数
 	 */
-	public static final int SEARCH_DEVICE_TIMES = 9;
+	public static final int SEARCH_DEVICE_TIMES = 1;
 	/**
 	 * 搜索的最大设备数量
 	 */

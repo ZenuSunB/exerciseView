@@ -1,11 +1,15 @@
 package org.poseestimation.socketconnect.connectview
 
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.os.SystemClock
 import android.view.View
-import android.widget.*
+import android.widget.ArrayAdapter
+import android.widget.Button
+import android.widget.ListView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import org.poseestimation.MainActivity
 import org.poseestimation.R
 import org.poseestimation.ReceiverActivity
 import org.poseestimation.layoutImpliment.BackArrowView
@@ -14,20 +18,18 @@ import org.poseestimation.socketconnect.Device
 import org.poseestimation.socketconnect.communication.host.Command
 import org.poseestimation.socketconnect.communication.host.CommandSender
 import org.poseestimation.socketconnect.search.DeviceSearcher
+import org.poseestimation.socketconnect.wearMesgReceiver.WearMesgReceiver
 import org.poseestimation.videodecoder.GlobalStaticVariable
 
-
-class hostviewActivity: AppCompatActivity() {
-
-    private val REQUEST_CODE = 1
+class WearviewActivity : AppCompatActivity() {
 
     lateinit var btnSearchDeviceOpen : Button
-    lateinit var slaveList: ListView
-    lateinit var btnReturn:BackArrowView
+    lateinit var receiverList: ListView
+    lateinit var btnReturn: BackArrowView
     var isSearchDeviceOpen:Boolean=false;
     var devices: MutableMap<String, Device> = mutableMapOf()
     var choosed_device:Device?=null
-    var JsonMeg_Intent:String?=null
+
     fun sendCommand(device: Device,str:String) {
         //发送命令
         val command = Command(str.toByteArray(), object : Command.Callback {
@@ -43,47 +45,49 @@ class hostviewActivity: AppCompatActivity() {
         command.setDestIp(device.ip)
         CommandSender.addCommand(command)
     }
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_wear)
 
-        var bundle=intent.getExtras()
-        bundle?.getString("ExerciseScheduleMesg")?.let{
-            JsonMeg_Intent=it
-        }
-        GlobalStaticVariable.reSet()
-        setContentView(R.layout.remote_camera_launcher)
+        btnReturn=findViewById(R.id.back_arrow)
         btnSearchDeviceOpen=this.findViewById(R.id.connectBtn)
         btnReturn=this.findViewById(R.id.back_arrow)
         btnReturn.setOnClickListener{
             finish()
         }
-        slaveList=this.findViewById(R.id.slavelist)
+
+        receiverList=this.findViewById(R.id.slavelist)
         btnSearchDeviceOpen.setOnClickListener{
             //创建popview进行局域网搜索
-                if (isSearchDeviceOpen) {
-                    //设备搜索已关闭
-                    clear()
-                    stopSearch()
-                    isSearchDeviceOpen = false
-                    btnSearchDeviceOpen.setText("开始搜索")
-                    Toast.makeText(this, "设备搜索已关闭", Toast.LENGTH_SHORT).show()
+            if (isSearchDeviceOpen) {
+                //设备搜索已关闭
+                WearMesgReceiver.close()
+                clear()
+                stopSearch()
+                isSearchDeviceOpen = false
+                btnSearchDeviceOpen.setText("开始搜索")
+                Toast.makeText(this, "设备搜索已关闭", Toast.LENGTH_SHORT).show()
 
-                } else {
-                    //设备搜索开始
-                    isSearchDeviceOpen = true
-                    btnSearchDeviceOpen.setText("搜索关闭")
-                    Toast.makeText(this, "设备搜索开始", Toast.LENGTH_SHORT).show()
-                    startSearch()
-                }
+            } else {
+                //设备搜索开始
+                isSearchDeviceOpen = true
+                btnSearchDeviceOpen.setText("搜索关闭")
+                Toast.makeText(this, "设备搜索开始", Toast.LENGTH_SHORT).show()
+                startSearch()
+            }
 
         }
 
-
     }
 
+    override fun onStart() {
+        super.onStart()
+
+    }
     override fun onStop() {
         super.onStop()
-        stopSearch()
     }
 
     override fun onResume() {
@@ -112,60 +116,43 @@ class hostviewActivity: AppCompatActivity() {
                     {
                         slaveList_str.add(item.value.uuid)
                     }
-                    var adapter = connectAdapter(slaveList_str,object :View.OnClickListener{
+                    var adapter = connectAdapter(slaveList_str,object : View.OnClickListener{
                         override fun onClick(view: View) {
                             var uuid = view.getTag() as String
                             devices.get(uuid)?.let {
                                 choosed_device=it
-//                                sendCommand(it,"openCamera")
+                                sendCommand(it,"SendWearMesg");
+                                WearMesgReceiver.start()
+                                WearMesgReceiver.open()
+                                Toast.makeText(baseContext,"连接成功",Toast.LENGTH_SHORT).show()
                             }
-                            var slaveIp=devices.get(uuid)!!.ip
-                            val intent = Intent(baseContext, ReceiverActivity::class.java)
-                            intent.putExtra("slaveIp",slaveIp)
-                            JsonMeg_Intent?.let {
-                                intent.putExtra("ExerciseScheduleMesg", it)
-                            }
-                            //状态清空
-                            clear()
-                            stopSearch()
-                            isSearchDeviceOpen = false
-                            btnSearchDeviceOpen.setText("开始搜索")
-                            //跳转并等待返回REQUEST_CODE
-                            startActivityForResult(intent,REQUEST_CODE)
                         }
                     })
-                    slaveList.adapter=adapter
+                    receiverList.adapter=adapter
                 }
             }
         })
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == REQUEST_CODE) {
-            choosed_device?.let {
-                sendCommand(it, "finishSendFrame")
-            }
-        }
-    }
     private fun stopSearch() {
         DeviceSearcher.close()
-        slaveList.setAdapter(
+        receiverList.setAdapter(
             ArrayAdapter<String>(
-            baseContext,
-            android.R.layout.simple_list_item_1,
-            arrayListOf())
-        )
-       devices.clear()
-    }
-    private fun clear()
-    {
-        slaveList.setAdapter(
-            ArrayAdapter<String>(
-            baseContext,
-            android.R.layout.simple_list_item_1,
-            arrayListOf())
+                baseContext,
+                android.R.layout.simple_list_item_1,
+                arrayListOf())
         )
         devices.clear()
     }
+    private fun clear()
+    {
+        receiverList.setAdapter(
+            ArrayAdapter<String>(
+                baseContext,
+                android.R.layout.simple_list_item_1,
+                arrayListOf())
+        )
+        devices.clear()
+    }
+
 }

@@ -1,11 +1,13 @@
-package org.poseestimation.socketconnect.communication.slave;
+package org.poseestimation.socketconnect.wearMesgReceiver;
+
+import android.util.Log;
 
 import org.poseestimation.socketconnect.RemoteConst;
 import org.poseestimation.socketconnect.communication.CommunicationKey;
+import org.poseestimation.videodecoder.GlobalStaticVariable;
 
 import java.io.DataInputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.Charset;
@@ -16,32 +18,30 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**
- * 用于接收命令和回写应答
- * Created by gw on 2017/11/6.
- */
-public class CommandReceiver {
+ * 用于接收wear心率
 
-    private static ThreadPoolExecutor threadPool = new ThreadPoolExecutor(3, 4, 60, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), new ReceiveCommandThreadFactory(), new RejectedExecutionHandler() {
+ */
+public class WearMesgReceiver {
+
+    private static ThreadPoolExecutor threadPool = new ThreadPoolExecutor(3, 4, 60, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), new ReceiveWearMesgThreadFactory(), new RejectedExecutionHandler() {
         @Override
         public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
             throw new RejectedExecutionException();
         }
     });
-    private static CommandListener listener;
     private static volatile boolean isOpen;
 
 
-    public static void start(CommandListener commandListener){
-        listener = commandListener;
+    public static void start(){
         isOpen = true;
         threadPool.execute(new Runnable() {
             @Override
             public void run() {
                 try {
-                    ServerSocket serverSocket = new ServerSocket(RemoteConst.COMMAND_RECEIVE_PORT);
+                    ServerSocket serverSocket = new ServerSocket(RemoteConst.WEARMESG_RECEIVE_PORT);
                     while(isOpen){
                         Socket socket = serverSocket.accept();
-                        threadPool.execute(new CommandParseRunnable(socket));
+                        threadPool.execute(new WearMesgParseRunnable(socket));
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -61,10 +61,10 @@ public class CommandReceiver {
     {
         threadPool.shutdown();
     }
-    public static class CommandParseRunnable implements Runnable{
+    public static class WearMesgParseRunnable implements Runnable{
         Socket socket;
 
-        public CommandParseRunnable(Socket socket){
+        public WearMesgParseRunnable(Socket socket){
             this.socket = socket;
         }
 
@@ -72,7 +72,7 @@ public class CommandReceiver {
         public void run() {
             try {
                 DataInputStream is = new DataInputStream(socket.getInputStream());
-                byte[] bytes = new byte[1024*8];
+                byte[] bytes = new byte[1024];
                 int i=0;
                 while(true){
                     bytes[i] = (byte) is.read();
@@ -83,9 +83,13 @@ public class CommandReceiver {
                         i++;
                     }else{
                         String data = new String(bytes, 0, i+1, Charset.defaultCharset()).replace(CommunicationKey.EOF, "");
-                        if(listener!=null){
-                            listener.onReceive(data);
+                        Float hearBeatRatio=Float.parseFloat(data);
+                        Log.d("", "HearBeatRatio:"+hearBeatRatio);
+                        if(hearBeatRatio==-1.0f)
+                        {
+                            isOpen=false;
                         }
+                        GlobalStaticVariable.Companion.set_NewestWearMesg_HeartBeartRatio(hearBeatRatio);
                     }
                 }
             }catch (Exception e){
@@ -102,7 +106,5 @@ public class CommandReceiver {
         }
     }
 
-    public interface CommandListener{
-        void onReceive(String data);
-    }
+
 }

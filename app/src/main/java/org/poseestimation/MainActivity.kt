@@ -6,7 +6,9 @@ import android.app.Dialog
 import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
+import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.content.res.Resources
 import android.media.ImageReader
 import android.media.projection.MediaProjectionManager
@@ -30,6 +32,8 @@ import org.poseestimation.layoutImpliment.SquareProgress
 import org.poseestimation.ml.ModelType
 import org.poseestimation.ml.MoveNet
 import org.poseestimation.service.screenCaptureService
+import org.poseestimation.socketconnect.communication.host.Command
+import org.poseestimation.socketconnect.communication.host.CommandSender
 import org.poseestimation.socketconnect.communication.slave.FrameData
 import org.poseestimation.socketconnect.communication.slave.FrameDataSender
 import org.poseestimation.utils.Voice
@@ -56,6 +60,8 @@ class MainActivity :AppCompatActivity() {
     private lateinit var countdownView: SurfaceView
     //倒计时framLayaout
     private lateinit var countdownViewFramLayout: FrameLayout
+    //倒计时背景
+    private lateinit var countdownViewBackground: ImageView
     //分数框
     private lateinit var scoreTextView: TextView
     //摄像机
@@ -86,6 +92,22 @@ class MainActivity :AppCompatActivity() {
         frameData.setDestIp(device.ip)
         FrameDataSender.addFrameData(frameData)
     }
+    fun sendCommand(device: org.poseestimation.socketconnect.Device, str:String) {
+        //发送命令
+        val command = Command(str.toByteArray(), object : Command.Callback {
+            override fun onEcho(msg: String?) {
+            }
+            override fun onError(msg: String?) {
+            }
+            override fun onRequest(msg: String?) {
+            }
+            override fun onSuccess(msg: String?) {
+            }
+        })
+        command.setDestIp(device.ip)
+        CommandSender.addCommand(command)
+    }
+
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~For Screen Projection~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     //获取权限
@@ -105,10 +127,11 @@ class MainActivity :AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        hideSystemUI()
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
         //创建运动数据文件
         //createFile()
         //隐藏UI
-        hideSystemUI()
         //————————————获取Intent数据，判断是否需要开启投屏服务————————————//
         var bundle=intent.getExtras()
         bundle?.getInt("isScreenProjection")?.let{
@@ -119,6 +142,10 @@ class MainActivity :AppCompatActivity() {
         }
         //————————————————————————————————————————————-————————————//
 
+        //—————————————————————初始化语音————————————————————————————//
+        Voice.reSet()
+        //————————————————————————————————————————————-————————————//
+
         //———————————————————————初始化控件——————————————————————————//
         msquareProgress = findViewById(R.id.sp)
         msquareProgress.setCurProgress(0)
@@ -127,6 +154,8 @@ class MainActivity :AppCompatActivity() {
         videoView = findViewById(R.id.videoView)
         countdownViewFramLayout=findViewById(R.id.countDownViewLayout)
         scoreTextView=findViewById(R.id.score)
+        countdownViewBackground=findViewById(R.id.mColor)
+
         //————————————————————————————————————————————-————————————//
 
         //———————————————————————权限申请————————————————————————————//
@@ -159,6 +188,10 @@ class MainActivity :AppCompatActivity() {
         super.onStart()
     }
 
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+    }
+
     private fun initView(){
         val mainActivity=this
 
@@ -188,7 +221,7 @@ class MainActivity :AppCompatActivity() {
             JsonMeg=it
         }
 
-        videoviewrepetend= VideoViewRepetend(JsonMeg,this,videoView,countdownView,countdownViewFramLayout,this.baseContext,object:VideoViewRepetend.VideoViewRepetendListener{
+        videoviewrepetend= VideoViewRepetend(JsonMeg,this,videoView,countdownView,countdownViewFramLayout,countdownViewBackground,this.baseContext,object:VideoViewRepetend.VideoViewRepetendListener{
             override fun onExerciseEnd(index:Int,samplevideoName:String,samplevideoTendency:MutableList<Int>,id:Int) {
                 //一轮运动完成，开始创建下一轮运动的数据结构
                 //休息阶段时关闭图像处理
@@ -244,9 +277,17 @@ class MainActivity :AppCompatActivity() {
                         LineReturnValue.put("data",cameraSource!!.Users.get(i).getJsonData())
                         TotalReturnValue.put(LineReturnValue)
                     }
+
                     TotalReturnData.put("id",ExerciseSchedule.getTotalId())
                     TotalReturnData.put("data",TotalReturnValue)
-                    writeTofile("test",TotalReturnData.toString())
+                    val intent :Intent= Intent();
+                    mainScreenReceiver?.let {
+                        stopProjection()
+                        intent.putExtra("state", "finish");
+                    }
+                    setResult(RESULT_OK, intent)
+                    finish()
+//                    writeTofile("test",TotalReturnData.toString())
                 }
 
             }
@@ -267,13 +308,7 @@ class MainActivity :AppCompatActivity() {
         super.onStop()
         cameraSource?.close()
         Voice.close()
-        mainScreenReceiver?.let {
-            stopProjection()
-            val intent :Intent= Intent();
-            intent.putExtra("state", "finish");
-            setResult(RESULT_OK, intent)
-            finish()
-        }
+
     }
 
     // check if permission is granted or not.
@@ -372,6 +407,13 @@ class MainActivity :AppCompatActivity() {
                 .setMessage(msg)
                 .setTitle("注意")
                 .setPositiveButton("确认", DialogInterface.OnClickListener { dialogInterface, i ->
+                    val intent :Intent= Intent()
+                    Voice.close()
+                    mainScreenReceiver?.let {
+                        stopProjection()
+                        intent.putExtra("state", "finish");
+                    }
+                    setResult(RESULT_CANCELED, intent)
                     finish()
                 })
                 .setNeutralButton("取消", null)
@@ -387,12 +429,17 @@ class MainActivity :AppCompatActivity() {
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~For Screen Projection~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     private fun screenProjectioninit()
     {
+        GlobalStaticVariable.frameLength=resources.displayMetrics.widthPixels
+        GlobalStaticVariable.frameWidth=resources.displayMetrics.heightPixels
+        mainScreenReceiver?.let {
+            sendCommand(it,"prepareAcceptFrame")
+        }
         // get width and height
         encoder= EncoderH264(
             GlobalStaticVariable.frameLength,GlobalStaticVariable.frameWidth
             ,object : EncoderH264.EncoderListener{
                 override fun h264(data: ByteArray) {
-                    fos?.write(data)
+//                    fos?.write(data)
                     Log.d("TAG","H264 SIZE:"+data.size)
                     mainScreenReceiver?.let {
                         sendFrameData(data,it)
@@ -423,6 +470,11 @@ class MainActivity :AppCompatActivity() {
                         data
                     )
                 )
+                thread {
+                    mainScreenReceiver?.let {
+                        FrameDataSender.open(it)
+                    }
+                }
             }
             else
             {
@@ -430,11 +482,11 @@ class MainActivity :AppCompatActivity() {
             }
         }
     }
-    private var fos:FileOutputStream?=null
-    private fun createFile()
-    {
-        fos = baseContext.openFileOutput("test.h264",Context.MODE_PRIVATE)
-    }
+//    private var fos:FileOutputStream?=null
+//    private fun createFile()
+//    {
+//        fos = baseContext.openFileOutput("test.h264",Context.MODE_PRIVATE)
+//    }
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~For Screen Projection~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 

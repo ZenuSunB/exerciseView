@@ -1,6 +1,7 @@
 package org.poseestimation.socketconnect.screenprojection
 
 import android.content.Intent
+import android.content.pm.ActivityInfo
 import android.content.res.Resources
 import android.os.Bundle
 import android.os.SystemClock
@@ -21,6 +22,7 @@ import org.poseestimation.socketconnect.communication.host.Command
 import org.poseestimation.socketconnect.communication.host.CommandSender
 import org.poseestimation.socketconnect.communication.slave.FrameDataSender
 import org.poseestimation.socketconnect.search.DeviceSearcher
+import org.poseestimation.socketconnect.wearMesgReceiver.WearMesgReceiver
 import org.poseestimation.videodecoder.GlobalStaticVariable
 import kotlin.concurrent.thread
 
@@ -56,11 +58,11 @@ class screen_sender_connectView  : AppCompatActivity()  {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.screen_projection_launcher)
+
         var bundle=intent.getExtras()
         bundle?.getString("ExerciseScheduleMesg")?.let{
             JsonMeg_Intent=it
         }
-
         btnReturn=findViewById(R.id.back_arrow)
         btnSearchDeviceOpen=this.findViewById(R.id.connectBtn)
         btnReturn=this.findViewById(R.id.back_arrow)
@@ -90,13 +92,17 @@ class screen_sender_connectView  : AppCompatActivity()  {
         }
 
     }
+
+    override fun onStart() {
+        super.onStart()
+
+    }
     override fun onStop() {
         super.onStop()
     }
 
     override fun onResume() {
         super.onResume()
-
     }
 
     override fun onPause() {
@@ -126,20 +132,9 @@ class screen_sender_connectView  : AppCompatActivity()  {
                             var uuid = view.getTag() as String
                             devices.get(uuid)?.let {
                                 choosed_device=it
-                                var JsonObj=JSONObject()
-                                GlobalStaticVariable.frameWidth=Resources.getSystem().displayMetrics.heightPixels
-                                GlobalStaticVariable.frameLength=Resources.getSystem().displayMetrics.widthPixels
-                                JsonObj.put("Width",GlobalStaticVariable.frameWidth)
-                                JsonObj.put("Length",GlobalStaticVariable.frameLength)
-                                sendCommand(it,"prepareAcceptFrame")
-                                SystemClock.sleep(100)
-                                sendCommand(it,JsonObj.toString())
+//                                sendCommand(it,"prepareAcceptFrame")
                             }
-                            SystemClock.sleep(300)
-                            thread {
-                                FrameDataSender.open(devices.get(uuid))
-                            }
-
+                            SystemClock.sleep(200);
                             val intent = Intent(baseContext, MainActivity::class.java)
                             intent.putExtra("isScreenProjection", true)
                             intent.putExtra("screenReceiverIp", devices.get(uuid)!!.ip)
@@ -150,7 +145,6 @@ class screen_sender_connectView  : AppCompatActivity()  {
                             stopSearch()
                             isSearchDeviceOpen = false
                             btnSearchDeviceOpen.setText("开始搜索")
-
                             startActivityForResult(intent,REQUEST_CODE)
                         }
                     })
@@ -163,8 +157,13 @@ class screen_sender_connectView  : AppCompatActivity()  {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == REQUEST_CODE) {
-            choosed_device?.let {
-                sendCommand(it, "finishAcceptFrame")
+            if(resultCode==RESULT_CANCELED) {
+                choosed_device?.let {
+                    if (data?.getStringExtra("state") != null) {
+                        sendCommand(it, "finishAcceptFrame")
+                        WearMesgReceiver.open()
+                    }
+                }
             }
         }
     }

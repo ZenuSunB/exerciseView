@@ -35,6 +35,7 @@ import org.poseestimation.socketconnect.communication.host.FrameDataReceiver
 import org.poseestimation.utils.DTWprocess
 import org.poseestimation.utils.Voice
 import java.util.*
+import kotlin.concurrent.thread
 
 
 class CameraReceiver(
@@ -88,22 +89,29 @@ class CameraReceiver(
     @Volatile
     private var isAlive:Boolean=true
     //定时器设置
-    private var NewFrameGenerator = Timer().schedule(object :TimerTask(){
+    private var NewFrameGenerator:Timer?=null
+    //定时器事件设置
+    private var timerTask:TimerTask?=object :TimerTask(){
         override fun run() {
-            if(!isAlive)
-            {
-                cancel()
+            try {
+                if (!isAlive)
+                    cancel()
+                var tempBitmap: Bitmap? = newestBitmap;
+                tempBitmap?.let {
+                    processImage(tempBitmap)
+                }
             }
-            var tempBitmap:Bitmap?=newestBitmap;
-            tempBitmap?.let{
-                processImage(tempBitmap)
+            catch (e:Throwable)
+            {
+                e.printStackTrace()
             }
         }
-    },2000,100)
-
+    }
     //初始化摄像机，并设置监听器
      suspend fun initCamera() {
 //        createFile()
+        NewFrameGenerator = Timer()
+        NewFrameGenerator?.schedule(timerTask,500,100)
         Samples.add(Sample(firstSamplevideoName+".processed.json",context,firstSamplevideoId,firstSamplevideoTendency,object:Sample.scorelistener{
             override fun onFrameScoreHeight(FrameScore: Int,part:Int) {
                 voice.voicePraise(FrameScore,part)
@@ -140,6 +148,14 @@ class CameraReceiver(
     }
 
     fun close() {
+        isImageprocess=false
+        timerTask?.cancel()
+        timerTask=null
+        NewFrameGenerator?.cancel()
+        NewFrameGenerator=null
+        isAlive=false
+        FrameDataReceiver.close()
+        isImageprocess=false
         isAlive=false
         detector?.close()
         detector = null
@@ -234,7 +250,7 @@ class CameraReceiver(
 
     fun prepareCamera() {
         //开始接受frame
-        FrameDataReceiver.open(object : FrameDataReceiver.FrameDataListener {
+        FrameDataReceiver.open(null,object : FrameDataReceiver.FrameDataListener {
             override fun onReceive(image: Image) {
                 if (image != null) {
                     if (!::imageBitmap.isInitialized) {

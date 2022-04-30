@@ -1,25 +1,19 @@
 package org.poseestimation
 
-import android.content.Intent
-import android.content.res.Resources
-import android.graphics.Bitmap
-import android.graphics.Matrix
-import android.graphics.Rect
-import android.media.Image
+import android.content.pm.ActivityInfo
+import android.content.res.Configuration
+import android.content.res.Configuration.ORIENTATION_LANDSCAPE
+import android.graphics.drawable.Drawable
 import android.os.Bundle
-import android.os.PersistableBundle
-import android.os.SystemClock
 import android.util.Log
 import android.view.*
 import android.widget.FrameLayout
 import androidx.appcompat.app.AppCompatActivity
-import androidx.constraintlayout.widget.ConstraintLayout
-import org.json.JSONObject
-
 import org.poseestimation.socketconnect.Device
 import org.poseestimation.socketconnect.communication.host.FrameDataReceiver
 import org.poseestimation.socketconnect.communication.slave.CommandReceiver
 import org.poseestimation.videodecoder.GlobalStaticVariable
+import org.poseestimation.videodecoder.GlobalStaticVariable.Companion.isFirstCreate
 import kotlin.concurrent.thread
 
 class screenReceiverActivity  : AppCompatActivity() {
@@ -27,20 +21,15 @@ class screenReceiverActivity  : AppCompatActivity() {
     lateinit var screenSurfaceView: SurfaceView
     public var mainScreenSender: Device?=null
 
-
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.screen_projection_receiver)
+        hideSystemUI()
         screenSurfaceView=findViewById(R.id.screen)
         GlobalStaticVariable.isScreenCapture=true
-
-        val screenHeight=resources.displayMetrics.heightPixels
-        val screenWidth=resources.displayMetrics.widthPixels
-
-        val ratio:Double=screenWidth.toDouble()/screenHeight.toDouble()
-        var mp= FrameLayout.LayoutParams((screenWidth).toInt(),(screenWidth*ratio).toInt())
-        mp.topMargin=-((screenWidth*ratio)/2-GlobalStaticVariable.frameLength/2).toInt()
-        screenSurfaceView?.layoutParams=mp
 
         var bundle=intent.getExtras()
         mainScreenSender =Device(bundle!!.getString("mainScreenSenderIp"))
@@ -49,17 +38,18 @@ class screenReceiverActivity  : AppCompatActivity() {
             override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
             }
             override fun surfaceCreated(p0: SurfaceHolder) {
-                GlobalStaticVariable.receiverSurface=p0.surface
-                FrameReceiverConnectThread=
-                    thread{
-                        try {
-                            FrameDataReceiver.open(null)
-                        }
-                        catch (e:InterruptedException)
-                        {
-                            Log.d("old:","Interrupted")
-                        }
+                FrameReceiverConnectThread=thread {
+                    try {
+                        FrameDataReceiver.open(p0.surface, null)
+                    } catch (e: InterruptedException) {
+                        Log.d("old:", "Interrupted")
                     }
+                    catch (e:Throwable )
+                    {
+                        e.printStackTrace();
+                    }
+                }
+
             }
             override fun surfaceDestroyed(p0: SurfaceHolder) {
             }
@@ -70,8 +60,11 @@ class screenReceiverActivity  : AppCompatActivity() {
                 commandResolver(command)
             }
         })
-        hideSystemUI()
+    }
 
+    override fun onStart() {
+        super.onStart()
+        hideSystemUI()
     }
     private fun commandResolver(demand:String?)
     {
@@ -99,11 +92,10 @@ class screenReceiverActivity  : AppCompatActivity() {
                 or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
                 or View.SYSTEM_UI_FLAG_FULLSCREEN)
     }
+
     override fun onStop() {
         super.onStop()
-        FrameReceiverConnectThread?.let{
-            it.interrupt()
-        }
+        FrameReceiverConnectThread?.interrupt()
         FrameDataReceiver.close()
     }
 

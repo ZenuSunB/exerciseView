@@ -26,6 +26,8 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
+import kotlin.jvm.Volatile;
+
 public class FrameDataSender  {
     private static ExecutorService executorService = Executors.newSingleThreadExecutor();
     private static Socket socket;
@@ -42,6 +44,10 @@ public class FrameDataSender  {
         catch  (IOException e) {
             e.printStackTrace();
         }
+        catch (Throwable e)
+        {
+            e.printStackTrace();
+        }
     }
 
     public static void close()
@@ -50,7 +56,7 @@ public class FrameDataSender  {
             if(socket!=null)
             {
                 isOpen=false;
-                socket.shutdownOutput();
+//                socket.shutdownOutput();
                 os=null;
                 socket.close();
                 socket = null;
