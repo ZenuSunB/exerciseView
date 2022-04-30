@@ -98,6 +98,7 @@ class ReceiverActivity: AppCompatActivity() {
     }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        println("++++++++++++++++++++receicver  onCreate")
         setContentView(R.layout.activity_receiver)
         //accept intent value
         hideSystemUI()
@@ -212,21 +213,25 @@ class ReceiverActivity: AppCompatActivity() {
     }
 
     override fun onResume() {
-        cameraReceiver?.resume()
         super.onResume()
+        cameraReceiver?.resume()
+        println("++++++++++++++++++++receicver  onResume")
     }
 
     override fun onPause() {
         super.onPause()
+        println("++++++++++++++++++++receicver  onPause")
         cameraReceiver?.pause()
-        cameraReceiver?.close()
     }
 
     override fun onStop() {
         super.onStop()
+        println("++++++++++++++++++++receicver  onStop")
+
         cameraReceiver?.close()
         FrameReceiverConnectThread?.interrupt()
         Voice.close()
+
     }
 
     // check if permission is granted or not.
@@ -265,6 +270,7 @@ class ReceiverActivity: AppCompatActivity() {
                         ExerciseSchedule.getName(videoviewrepetend!!.index),
                         //*************************************************************
                         ExerciseSchedule.getId(0)).apply {
+                        destroy()
                         FrameReceiverConnectThread=
                             thread{
                                 try {

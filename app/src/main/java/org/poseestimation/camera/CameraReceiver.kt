@@ -110,6 +110,7 @@ class CameraReceiver(
     //初始化摄像机，并设置监听器
      suspend fun initCamera() {
 //        createFile()
+        println("++++++++++++++++++++Camera  initCamera")
         NewFrameGenerator = Timer()
         NewFrameGenerator?.schedule(timerTask,500,100)
         Samples.add(Sample(firstSamplevideoName+".processed.json",context,firstSamplevideoId,firstSamplevideoTendency,object:Sample.scorelistener{
@@ -139,28 +140,28 @@ class CameraReceiver(
 
     fun pause()
     {
-
+        println("++++++++++++++++++++Camera  pause")
     }
 
     fun resume()
     {
-
+        println("++++++++++++++++++++Camera  resume")
     }
 
     fun close() {
-        isImageprocess=false
+        println("++++++++++++++++++++Camera  close")
         timerTask?.cancel()
         timerTask=null
         NewFrameGenerator?.cancel()
         NewFrameGenerator=null
         isAlive=false
-        FrameDataReceiver.close()
-        isImageprocess=false
-        isAlive=false
-        detector?.close()
+//        detector?.close()
         detector = null
-        isPersonDetect=true
-
+    }
+    public fun destroy()
+    {
+        isImageprocess=false
+        FrameDataReceiver.close()
     }
 
     //process image

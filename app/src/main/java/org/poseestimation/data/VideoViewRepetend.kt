@@ -28,6 +28,7 @@ class VideoViewRepetend(
     private var context: Context,
     private var listener: VideoViewRepetendListener?=null)
 {
+    private val urlPrefix:String="http://120.46.128.131:8000/statics/exercise-video/";
     public lateinit var schedule: ExerciseSchedule
     var countDountMp:MediaPlayer?=null
     val surfaceHolder=object :SurfaceHolder.Callback{
@@ -167,9 +168,11 @@ class VideoViewRepetend(
     }
     private fun setVideoView()
     {
-        val exVideoId=context.resources.getIdentifier(ExerciseSchedule.getName(index), "raw", context.getPackageName())
-        val ExerciseDounturi = "android.resource://" + context.packageName + "/" + exVideoId
-        videoView.setVideoURI(Uri.parse(ExerciseDounturi))
+//        val exVideoId=context.resources.getIdentifier(ExerciseSchedule.getName(index), "raw", context.getPackageName())
+//        val ExerciseDounturi = "android.resource://" + context.packageName + "/" + exVideoId
+        var ExerciseDounturi=urlPrefix+ExerciseSchedule.getName(index)+".mp4"
+//        println("+++++++++++++"+ExerciseDounturi);
+        videoView.setVideoPath(ExerciseDounturi)
         videoView.seekTo(1)
 
     }

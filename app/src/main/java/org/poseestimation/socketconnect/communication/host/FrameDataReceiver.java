@@ -146,6 +146,7 @@ public class FrameDataReceiver {
         if(socket!=null)
         {
             try {
+                socket.close();
                 socket=null;
                 serverSocket.close();
                 serverSocket=null;

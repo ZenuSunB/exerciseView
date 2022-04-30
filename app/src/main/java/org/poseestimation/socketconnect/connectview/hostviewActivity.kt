@@ -45,7 +45,7 @@ class hostviewActivity: AppCompatActivity() {
     }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
+        println("++++++++++++++++++++host  onCreate")
         var bundle=intent.getExtras()
         bundle?.getString("ExerciseScheduleMesg")?.let{
             JsonMeg_Intent=it
@@ -83,14 +83,25 @@ class hostviewActivity: AppCompatActivity() {
 
     override fun onStop() {
         super.onStop()
+        println("++++++++++++++++++++host  onStop")
         stopSearch()
     }
 
     override fun onResume() {
+        println("++++++++++++++++++++host  onResume")
+        if(this.isTaskRoot)
+        {
+            println("++++++++++++++++++++++++host is ROOT")
+        }
+        else
+        {
+            println("++++++++++++++++++++++++host is not ROOT")
+        }
         super.onResume()
     }
 
     override fun onPause() {
+        println("++++++++++++++++++++host  onPause")
         super.onPause()
     }
     /**
@@ -142,6 +153,7 @@ class hostviewActivity: AppCompatActivity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
+        println("++++++++++++++++++++host  onActivityResult")
         if (requestCode == REQUEST_CODE) {
             choosed_device?.let {
                 sendCommand(it, "finishSendFrame")

@@ -17,12 +17,14 @@ class Voice(private val context: Context) {
         @Synchronized
         fun close()
         {
+            println("++++++++++++++++++voice onClose")
             voicePlayer.stop()
             isClose=true
         }
         @Synchronized
         fun reSet()
         {
+            println("++++++++++++++++++voice reSet")
             isClose=false
 
         }
