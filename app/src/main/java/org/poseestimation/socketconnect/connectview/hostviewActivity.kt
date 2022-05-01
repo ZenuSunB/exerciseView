@@ -144,7 +144,7 @@ class hostviewActivity: AppCompatActivity() {
                             //跳转并等待返回REQUEST_CODE
                             startActivityForResult(intent,REQUEST_CODE)
                         }
-                    })
+                    },"连接")
                     slaveList.adapter=adapter
                 }
             }

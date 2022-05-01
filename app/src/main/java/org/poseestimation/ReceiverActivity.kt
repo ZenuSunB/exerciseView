@@ -178,7 +178,6 @@ class ReceiverActivity: AppCompatActivity() {
             override fun onExerciseStart(index:Int,samplevideoName:String) {
                 cameraReceiver!!.setProcessImageFlag(true)
             }
-
             override fun onExerciseFinish(index: Int) {
                 //运动全部结束，准备退出
                 //退出前关闭图像处理
@@ -208,6 +207,14 @@ class ReceiverActivity: AppCompatActivity() {
                     setResult(RESULT_OK, intent)
                     finish()
                 }
+            }
+
+            override fun onVideoEnd() {
+                TODO("Not yet implemented")
+            }
+
+            override fun onVideoPrepared() {
+                TODO("Not yet implemented")
             }
         })
     }

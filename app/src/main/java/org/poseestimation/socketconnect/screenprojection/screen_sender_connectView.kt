@@ -147,7 +147,7 @@ class screen_sender_connectView  : AppCompatActivity()  {
                             btnSearchDeviceOpen.setText("开始搜索")
                             startActivityForResult(intent,REQUEST_CODE)
                         }
-                    })
+                    },"连接")
                     receiverList.adapter=adapter
                 }
             }

@@ -15,13 +15,21 @@ import androidx.appcompat.app.AppCompatActivity
 import org.poseestimation.R
 import org.poseestimation.layoutImpliment.BackArrowView
 import org.poseestimation.layoutImpliment.connectAdapter
+import org.poseestimation.socketconnect.Device
+import org.poseestimation.socketconnect.bluetoothReceiver.BluetoothMesg
+import org.poseestimation.socketconnect.bluetoothReceiver.BluetoothMesgReceiver
+import org.poseestimation.socketconnect.bluetoothReceiver.BluetoothMesgSender
 import org.poseestimation.socketconnect.bluetoothReceiver.ScanBroadcastReceiver
+import org.poseestimation.socketconnect.communication.host.Command
+import org.poseestimation.socketconnect.communication.host.CommandSender
+import org.poseestimation.videodecoder.GlobalStaticVariable
 import java.lang.reflect.Method
 
 
 class BluetoothWearviewActivity : AppCompatActivity() {
     lateinit var btnSearchDeviceOpen : Button
     lateinit var receiverList: ListView
+    lateinit var pairedList: ListView
     lateinit var btnReturn: BackArrowView
     var isSearchDeviceOpen:Boolean=false;
     var devices: MutableMap<String, BluetoothDevice> = mutableMapOf()
@@ -29,38 +37,40 @@ class BluetoothWearviewActivity : AppCompatActivity() {
 
     private var mAdapter: BluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
     private var scanBroadcastReceiver: ScanBroadcastReceiver?=null
-
-
+    fun sendBluetoothMesg(device: BluetoothDevice, str:String) {
+        //发送命令
+        val bluetoothMesg = BluetoothMesg(str.toByteArray())
+        BluetoothMesg.setBluetoothDevice(device)
+        BluetoothMesgSender.addBluetoothMesg(bluetoothMesg)
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_wear)
         btnReturn=findViewById(R.id.back_arrow)
         btnSearchDeviceOpen=this.findViewById(R.id.connectBtn)
         btnReturn=this.findViewById(R.id.back_arrow)
+        pairedList=this.findViewById((R.id.pairlist))
         btnReturn.setOnClickListener{
             finish()
         }
+        pairListInit()
         try {
             if(mAdapter==null||!mAdapter.isEnabled())
             {
                 val enableBtIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
                 startActivityForResult(enableBtIntent, 1)
             }
-            val pairedDevices: Set<BluetoothDevice> = mAdapter.getBondedDevices()
-            for(i in pairedDevices)
-            {
-                println("++++++++++++++"+i.name)
-            }
+
             receiverList=this.findViewById(R.id.slavelist)
             btnSearchDeviceOpen.setOnClickListener{
                 //创建popview进行局域网搜索
                 if (isSearchDeviceOpen) {
                     clear()
                     mAdapter.cancelDiscovery()
+                    pairListInit()
                     isSearchDeviceOpen = false
                     btnSearchDeviceOpen.setText("开始搜索")
                     Toast.makeText(this, "设备搜索已关闭", Toast.LENGTH_SHORT).show()
-
                 } else {
                     mAdapter.startDiscovery();
                     isSearchDeviceOpen = true
@@ -91,6 +101,7 @@ class BluetoothWearviewActivity : AppCompatActivity() {
     override fun onStop() {
         super.onStop()
         unregisterReceiver(scanBroadcastReceiver);
+        scanBroadcastReceiver=null
     }
 
     override fun onResume() {
@@ -100,6 +111,38 @@ class BluetoothWearviewActivity : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
+    }
+    fun pairListInit()
+    {
+        try{
+            val pairedDevices: Set<BluetoothDevice> = mAdapter.getBondedDevices()
+            var pairedList_str: ArrayList<String> = arrayListOf()
+            for(i in pairedDevices)
+            {
+                pairedList_str.add(i.name)
+            }
+            var adapter =
+                connectAdapter(pairedList_str, object : View.OnClickListener {
+                    override fun onClick(view: View) {
+                        var name = view.getTag() as String
+                        for(item in pairedDevices)
+                        {
+                            if(item.name==name)
+                            {
+                                sendBluetoothMesg(item,"startSendHeatBeatRatio")
+                                BluetoothMesg.setBluetoothAdapter(mAdapter)
+                                GlobalStaticVariable.isWearDeviceConnect=true;
+                                Toast.makeText(baseContext, "连接成功！", Toast.LENGTH_SHORT).show()
+                                BluetoothMesgReceiver.start()
+                            }
+                        }
+                    }
+                },"连接")
+            pairedList.adapter = adapter
+        }catch (e:SecurityException)
+        {
+            e.printStackTrace()
+        }
     }
     /**
      * 使用新api扫描
@@ -111,12 +154,16 @@ class BluetoothWearviewActivity : AppCompatActivity() {
         if (scanBroadcastReceiver == null && application != null) {
             scanBroadcastReceiver=ScanBroadcastReceiver(object :ScanBroadcastReceiver.ScanBroadcastReceiverListener{
                 override fun on_found(device: BluetoothDevice) {
+
                     device?.let {
                         try {
+                            val pairedDevices: Set<BluetoothDevice> = mAdapter.getBondedDevices()
+
                             devices.put(it.name, it)
                             var slaveList_str: ArrayList<String> = arrayListOf()
                             for (item in devices) {
-                                slaveList_str.add(item.value.name)
+                                if(pairedDevices.contains(item.value)==false)
+                                    slaveList_str.add(item.value.name)
                             }
                             var adapter =
                                 connectAdapter(slaveList_str, object : View.OnClickListener {
@@ -128,12 +175,9 @@ class BluetoothWearviewActivity : AppCompatActivity() {
                                                 mAdapter.cancelDiscovery();
                                             }
                                             it.createBond()
-//                                            val createBond: Method =
-//                                                BluetoothDevice::class.java.getMethod("createBond")
-//                                            createBond.invoke(it)
                                         }
                                     }
-                                })
+                                },"配对")
                             receiverList.adapter = adapter
                         }catch (e:SecurityException)
                         {

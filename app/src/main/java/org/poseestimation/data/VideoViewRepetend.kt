@@ -15,6 +15,7 @@ import androidx.constraintlayout.widget.Constraints
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import org.poseestimation.R
 import org.poseestimation.utils.Voice
+import java.net.URL
 import java.util.*
 
 
@@ -28,6 +29,7 @@ class VideoViewRepetend(
     private var context: Context,
     private var listener: VideoViewRepetendListener?=null)
 {
+    private var loopTimes:Int=0;
     private val urlPrefix:String="http://120.46.128.131:8000/statics/exercise-video/";
     public lateinit var schedule: ExerciseSchedule
     var countDountMp:MediaPlayer?=null
@@ -64,59 +66,87 @@ class VideoViewRepetend(
             countDownShow()
         }
         setVideoView()
-        countDountMp?.setOnCompletionListener{
+        countDountMp?.setOnCompletionListener {
             //隐藏倒计时VIEW
             countDownHide()
             //运动开始触发,进入运动视频
-            listener?.onExerciseStart(index,ExerciseSchedule.getName(index))
+            listener?.onExerciseStart(index, ExerciseSchedule.getName(index))
             //播放运动视频
             videoView.start()
             //设置运动视频完成的handler
             videoView?.setOnCompletionListener {
-                //运动视频结束，开始进入休息界面
-                index++
-                if(index<ExerciseSchedule.getSize()) //判断是否播放完毕
+                listener?.onVideoEnd()
+                println("+++++++++++++++++++++++++++8888888888888")
+
+                if (--loopTimes > 0)
                 {
-                    //尚未播放完毕，转入休息界面，并更新参数以播放下一种运动视频
-                    listener?.onExerciseEnd(
-                        index,
-                        ExerciseSchedule.getName(index),
-                        ExerciseSchedule.getTagByIndex(index),
-                        ExerciseSchedule.getId(index)
-                    )
-                    //运动结束触发，进入休息视频
-                    val reVideoId = context.resources.getIdentifier("relaxtimer","raw", context.getPackageName() )
-                    setCountView(reVideoId)
-                    //设置休息倒计时界面显示
-                    countDownShow()
-                    countDountMp?.setOnCompletionListener {
-                        //休息视频运动完毕,重新开始播放倒计时
-                        countDownHide()
-                        setPlayVideo()
-                    }
-                    countDountMp?.start()
-                    voice?.voiceRest()
+
+                    println("+++++++++++++++++++++++++++"+loopTimes)
+                    videoView.start()
+                    listener?.onVideoPrepared()
+//                    videoView?.setOnPreparedListener {it->
+//                        println("+++++++++++++++++++++++++++77777")
+//                        it.start()
+//
+//                    }
+//                    setVideoView()
                 }
-                else
-                {
-                    //运动finish，播放分析视频.
-                    val analysisId = context.resources.getIdentifier("analysis","raw", context.getPackageName() )
-                    setCountView(analysisId)
-                    //设置分析视频界面显示
-                    countDownShow()
-                    mainActivity.runOnUiThread(java.lang.Runnable {
-                        Toast.makeText(context,"运动数据报告生成中",Toast.LENGTH_LONG).show()
-                    })
-                    countdownBackground.setImageDrawable(context.resources.getDrawable(R.drawable.whiteback))
-                    countDountMp?.setOnCompletionListener {
-                        val analysisId = context.resources.getIdentifier("analysis","raw", context.getPackageName() )
+                else {
+                    //运动视频结束，开始进入休息界面
+                    index++
+                    if (index < ExerciseSchedule.getSize()) //判断是否播放完毕
+                    {
+                        //尚未播放完毕，转入休息界面，并更新参数以播放下一种运动视频
+                        listener?.onExerciseEnd(
+                            index,
+                            ExerciseSchedule.getName(index),
+                            ExerciseSchedule.getTagByIndex(index),
+                            ExerciseSchedule.getId(index)
+                        )
+                        //运动结束触发，进入休息视频
+                        val reVideoId = context.resources.getIdentifier(
+                            "relaxtimer",
+                            "raw",
+                            context.getPackageName()
+                        )
+                        setCountView(reVideoId)
+                        //设置休息倒计时界面显示
+                        countDownShow()
+                        countDountMp?.setOnCompletionListener {
+                            //休息视频运动完毕,重新开始播放倒计时
+                            countDownHide()
+                            setPlayVideo()
+                        }
+                        countDountMp?.start()
+                        voice?.voiceRest()
+                    } else {
+                        //运动finish，播放分析视频.
+                        val analysisId = context.resources.getIdentifier(
+                            "analysis",
+                            "raw",
+                            context.getPackageName()
+                        )
                         setCountView(analysisId)
                         //设置分析视频界面显示
+                        countDownShow()
+                        mainActivity.runOnUiThread(java.lang.Runnable {
+                            Toast.makeText(context, "运动数据报告生成中", Toast.LENGTH_LONG).show()
+                        })
+                        countdownBackground.setImageDrawable(context.resources.getDrawable(R.drawable.whiteback))
+                        countDountMp?.setOnCompletionListener {
+                            val analysisId = context.resources.getIdentifier(
+                                "analysis",
+                                "raw",
+                                context.getPackageName()
+                            )
+                            setCountView(analysisId)
+                            //设置分析视频界面显示
+                            countDountMp?.start()
+                        }
                         countDountMp?.start()
+                        //运动视频播放完毕，退出运动界面
+                        listener?.onExerciseFinish(index)//运动结束触发
                     }
-                    countDountMp?.start()
-                    //运动视频播放完毕，退出运动界面
-                    listener?.onExerciseFinish(index)//运动结束触发
                 }
             }
         }
@@ -168,13 +198,14 @@ class VideoViewRepetend(
     }
     private fun setVideoView()
     {
-//        val exVideoId=context.resources.getIdentifier(ExerciseSchedule.getName(index), "raw", context.getPackageName())
-//        val ExerciseDounturi = "android.resource://" + context.packageName + "/" + exVideoId
-        var ExerciseDounturi=urlPrefix+ExerciseSchedule.getName(index)+".mp4"
-//        println("+++++++++++++"+ExerciseDounturi);
-        videoView.setVideoPath(ExerciseDounturi)
+        val exVideoId=context.resources.getIdentifier(ExerciseSchedule.getName(index), "raw", context.getPackageName())
+        val ExerciseDounturi = "android.resource://" + context.packageName + "/" + exVideoId
+//        var ExerciseDounturi=urlPrefix+ExerciseSchedule.getName(index)+".mp4"
+        videoView.setVideoURI(Uri.parse(ExerciseDounturi))
         videoView.seekTo(1)
-
+        loopTimes=ExerciseSchedule.getExerciseGroups(index)
+        println("+++++++++++++++++++++++++"+ExerciseDounturi)
+        println("+++++++++++++++++++++++"+loopTimes)
     }
     private fun countDownShow()
     {
@@ -193,5 +224,7 @@ class VideoViewRepetend(
         fun onExerciseStart(index:Int,samplevideoName:String)
         fun onExerciseEnd(index:Int,samplevideoName:String,samplevideoTendency:MutableList<Int>,id:Int)
         fun onExerciseFinish(index:Int)
+        fun onVideoPrepared()
+        fun onVideoEnd()
     }
 }

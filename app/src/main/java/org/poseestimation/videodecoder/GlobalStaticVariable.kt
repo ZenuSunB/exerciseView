@@ -16,10 +16,16 @@ class GlobalStaticVariable {
         public var isFirstCreate=true
         @Volatile
         public var newestWearMesg_HeartBeartRatio=0f;
+        @Volatile
+        public var isWearDeviceConnect=false;
 
         fun set_NewestWearMesg_HeartBeartRatio(ratio:Float)
         {
             newestWearMesg_HeartBeartRatio=ratio;
+        }
+        fun set_WearDeviceConnect(boolean: Boolean)
+        {
+            isWearDeviceConnect=boolean;
         }
         fun reSet()
         {

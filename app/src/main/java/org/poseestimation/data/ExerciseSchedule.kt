@@ -99,8 +99,8 @@ class ExerciseSchedule(JSONmeg:String) {
         public fun getName(index:Int):String{
             return exerciseName.get(index)
         }
-        public fun getExerciseGroups(index:Int):String{
-            return exerciseName.get(index)
+        public fun getExerciseGroups(index:Int):Int{
+            return exerciseGroups.get(index)
         }
         public fun getId(index:Int):Int{
             return exerciseId.get(index)
@@ -126,6 +126,7 @@ class ExerciseSchedule(JSONmeg:String) {
             exerciseId.clear()
             exerciseGroups.clear()
         }
+
     }
 
     private val meg:String=JSONmeg

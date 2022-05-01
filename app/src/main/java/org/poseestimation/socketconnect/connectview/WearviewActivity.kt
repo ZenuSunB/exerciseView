@@ -127,7 +127,7 @@ class WearviewActivity : AppCompatActivity() {
                                 Toast.makeText(baseContext,"连接成功",Toast.LENGTH_SHORT).show()
                             }
                         }
-                    })
+                    },"连接")
                     receiverList.adapter=adapter
                 }
             }

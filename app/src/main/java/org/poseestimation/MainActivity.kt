@@ -201,12 +201,7 @@ class MainActivity :AppCompatActivity() {
                 "        {\n" +
                 "            \"id\": 3,\n" +
                 "            \"url\": \"sample3\",\n" +
-                "            \"groups\": \"2\"\n" +
-                "        },\n" +
-                "        {\n" +
-                "            \"id\": 7,\n" +
-                "            \"url\": \"sample7\",\n" +
-                "            \"groups\": \"2\"\n" +
+                "            \"groups\": \"15\"\n" +
                 "        }]}"
 //                ="{\n" +
 //                "    \"id\": 5,\n"+
@@ -255,7 +250,6 @@ class MainActivity :AppCompatActivity() {
             override fun onExerciseStart(index:Int,samplevideoName:String) {
                 cameraSource!!.setProcessImageFlag(true)
             }
-
             override fun onExerciseFinish(index: Int) {
                 //运动全部结束，准备退出
                 //退出前关闭图像处理
@@ -290,6 +284,14 @@ class MainActivity :AppCompatActivity() {
 //                    writeTofile("test",TotalReturnData.toString())
                 }
 
+            }
+
+            override fun onVideoEnd() {
+                cameraSource!!.setProcessImageFlag(false)
+            }
+
+            override fun onVideoPrepared() {
+                cameraSource!!.setProcessImageFlag(true)
             }
         })
     }
