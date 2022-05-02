@@ -34,6 +34,9 @@ class slaveviewActivity : AppCompatActivity() {
         btnReturn=findViewById(R.id.back_arrow)
         hostList=findViewById(R.id.hostlist)
         btnListeningOpen=findViewById(R.id.connectBtn)
+        btnReturn.setOnClickListener {
+            finish()
+        }
         btnListeningOpen?.setOnClickListener {
             if(isListeningOpen)
             {

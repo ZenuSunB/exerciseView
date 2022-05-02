@@ -44,9 +44,11 @@ import org.poseestimation.data.ResJSdata
 import org.poseestimation.data.Sample
 import org.poseestimation.data.VideoViewRepetend
 import org.poseestimation.ml.PoseDetector
+import org.poseestimation.socketconnect.connectview.BluetoothWearviewActivity
 import org.poseestimation.utils.BoneVectorPart
 import org.poseestimation.utils.DTWprocess
 import org.poseestimation.utils.Voice
+import org.poseestimation.videodecoder.GlobalStaticVariable
 import java.io.*
 import java.util.*
 import kotlin.random.Random
@@ -335,7 +337,7 @@ class CameraSource(
                     }
                     if(Samples[index].getClock()%2==0)
                         Users[index].append(scoreBypart, uservector,Samples[index].getSampleVectorNow())
-                    listener?.onImageprocessListener(score.toInt())
+                    listener?.onImageprocessListener(score.toInt(),GlobalStaticVariable.newestWearMesg_HeartBeartRatio.toInt())
                 }
                 frameProcessedInOneSecondInterval++
                 if (frameProcessedInOneSecondInterval == 1) {
@@ -409,9 +411,10 @@ class CameraSource(
 
     interface CameraSourceListener {
         fun onFPSListener(fps: Int)
-        fun onImageprocessListener(score: Int)
+        fun onImageprocessListener(score: Int,ratio: Int)
         fun onDetectedInfo(personScore: Float?, poseLabels: List<Pair<String, Float>>?)
         fun onPersonDetected()
+
     }
 
     private fun showToast(message: String)

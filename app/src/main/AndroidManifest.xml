@@ -39,10 +39,10 @@
                 android:name=".socketconnect.connectview.BluetoothWearviewActivity"
                 android:exported="true"
                 android:screenOrientation="portrait">
-                    <intent-filter>
-                        <action android:name="android.intent.action.MAIN" />
-                        <category android:name="android.intent.category.LAUNCHER" />
-                    </intent-filter>/>
+<!--                    <intent-filter>-->
+<!--                        <action android:name="android.intent.action.MAIN" />-->
+<!--                        <category android:name="android.intent.category.LAUNCHER" />-->
+<!--                    </intent-filter>/>-->
             </activity>
 <!--        <activity-->
 <!--            android:name=".socketconnect.connectview.WearviewActivity"-->
@@ -98,10 +98,10 @@
             android:name=".testActivity"
             android:exported="true"
             android:screenOrientation="portrait">
-<!--            <intent-filter>-->
-<!--                <action android:name="android.intent.action.MAIN" />-->
-<!--                <category android:name="android.intent.category.LAUNCHER" />-->
-<!--            </intent-filter>/>-->
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>/>
         </activity>
         <activity
             android:name=".SenderActivity"

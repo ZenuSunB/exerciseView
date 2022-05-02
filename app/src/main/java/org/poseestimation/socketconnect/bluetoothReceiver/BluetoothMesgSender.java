@@ -57,10 +57,8 @@ public class BluetoothMesgSender {
                 OutputStream os = socket.getOutputStream();
                 if(os!=null) {
                     //发送命令内容
-                    Log.d("TAG", "run: 111111111111111");
                     os.write(bluetoothMesg.getContent());
                     os.write(CommunicationKey.EOF.getBytes());
-                    Log.d("TAG", "run: 222222222222222");
                 }
             } catch (IOException e) {
                 e.printStackTrace();

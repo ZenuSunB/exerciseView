@@ -88,7 +88,7 @@ public class BluetoothMesgReceiver {
                     }else{
                         String data = new String(bytes, 0, i+1, Charset.defaultCharset()).replace(CommunicationKey.EOF, "");
                         Float hearBeatRatio=Float.parseFloat(data);
-                        Log.d("", "HearBeatRatio:"+hearBeatRatio);
+                        Log.d("", "HeartBeatRatio:"+hearBeatRatio);
                         if(hearBeatRatio==-1.0f)
                         {
                             isOpen=false;

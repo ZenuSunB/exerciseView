@@ -3,6 +3,7 @@ package org.poseestimation
 import android.Manifest
 import android.app.AlertDialog
 import android.app.Dialog
+import android.bluetooth.BluetoothDevice
 import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
@@ -32,6 +33,9 @@ import org.poseestimation.layoutImpliment.SquareProgress
 import org.poseestimation.ml.ModelType
 import org.poseestimation.ml.MoveNet
 import org.poseestimation.service.screenCaptureService
+import org.poseestimation.socketconnect.bluetoothReceiver.BluetoothMesg
+import org.poseestimation.socketconnect.bluetoothReceiver.BluetoothMesgReceiver
+import org.poseestimation.socketconnect.bluetoothReceiver.BluetoothMesgSender
 import org.poseestimation.socketconnect.communication.host.Command
 import org.poseestimation.socketconnect.communication.host.CommandSender
 import org.poseestimation.socketconnect.communication.slave.FrameData
@@ -70,7 +74,8 @@ class MainActivity :AppCompatActivity() {
     private val voice= org.poseestimation.utils.Voice(this)
     //运动视频循环节
     private var videoviewrepetend:VideoViewRepetend? =null
-
+    //心率框
+    private lateinit var heartBeatRatioView: TextView
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~For Screen Projection~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     //编码器
     private var encoder: EncoderH264?=null
@@ -110,6 +115,18 @@ class MainActivity :AppCompatActivity() {
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~For Screen Projection~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+
+
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~For Wear Message~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    fun sendBluetoothMesg(str:String) {
+        //发送命令
+        val bluetoothMesg = BluetoothMesg(str.toByteArray())
+        BluetoothMesg.setBluetoothDevice(BluetoothMesg.getBluetoothDevice())
+        BluetoothMesgSender.addBluetoothMesg(bluetoothMesg)
+    }
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~For Wear Message~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
     //获取权限
     private val requestPermissionLauncher =
         registerForActivityResult(
@@ -140,6 +157,11 @@ class MainActivity :AppCompatActivity() {
             mainScreenReceiver=org.poseestimation.socketconnect.Device(bundle?.getString("screenReceiverIp"))
             screenProjectioninit()
         }
+        if(GlobalStaticVariable.isWearDeviceConnect)
+        {
+            sendBluetoothMesg("startSendHeatBeatRatio")
+            BluetoothMesgReceiver.start()
+        }
         //————————————————————————————————————————————-————————————//
 
         //—————————————————————初始化语音————————————————————————————//
@@ -155,7 +177,7 @@ class MainActivity :AppCompatActivity() {
         countdownViewFramLayout=findViewById(R.id.countDownViewLayout)
         scoreTextView=findViewById(R.id.score)
         countdownViewBackground=findViewById(R.id.mColor)
-
+        heartBeatRatioView=findViewById(R.id.heartBeatRatio)
         //————————————————————————————————————————————-————————————//
 
         //———————————————————————权限申请————————————————————————————//
@@ -310,7 +332,11 @@ class MainActivity :AppCompatActivity() {
         super.onStop()
         cameraSource?.close()
         Voice.close()
-
+        if(GlobalStaticVariable.isWearDeviceConnect)
+        {
+            sendBluetoothMesg("finish")
+            BluetoothMesgReceiver.close()
+        }
     }
 
     // check if permission is granted or not.
@@ -328,12 +354,14 @@ class MainActivity :AppCompatActivity() {
             if (cameraSource == null) {
                 cameraSource =
                     CameraSource(surfaceView, object : CameraSource.CameraSourceListener {
-                        override fun onImageprocessListener(score: Int) {
+                        override fun onImageprocessListener(score: Int,ratio:Int) {
                             msquareProgress.setCurProgress(score);
                             runOnUiThread {
                                 scoreTextView.setText(score.toString())
+                                heartBeatRatioView.setText(ratio.toString())
                             }
                         }
+
                         override fun onDetectedInfo( personScore: Float?,poseLabels: List<Pair<String, Float>>?) {
                             TODO("Not yet implemented")
                         }

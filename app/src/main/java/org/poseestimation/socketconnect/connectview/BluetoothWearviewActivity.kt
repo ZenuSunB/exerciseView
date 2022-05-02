@@ -12,6 +12,7 @@ import android.widget.Button
 import android.widget.ListView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import org.poseestimation.MainActivity
 import org.poseestimation.R
 import org.poseestimation.layoutImpliment.BackArrowView
 import org.poseestimation.layoutImpliment.connectAdapter
@@ -54,13 +55,13 @@ class BluetoothWearviewActivity : AppCompatActivity() {
             finish()
         }
         pairListInit()
+
         try {
             if(mAdapter==null||!mAdapter.isEnabled())
             {
                 val enableBtIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
                 startActivityForResult(enableBtIntent, 1)
             }
-
             receiverList=this.findViewById(R.id.slavelist)
             btnSearchDeviceOpen.setOnClickListener{
                 //创建popview进行局域网搜索
@@ -71,13 +72,14 @@ class BluetoothWearviewActivity : AppCompatActivity() {
                     isSearchDeviceOpen = false
                     btnSearchDeviceOpen.setText("开始搜索")
                     Toast.makeText(this, "设备搜索已关闭", Toast.LENGTH_SHORT).show()
+
                 } else {
                     mAdapter.startDiscovery();
                     isSearchDeviceOpen = true
                     btnSearchDeviceOpen.setText("搜索关闭")
                     Toast.makeText(this, "设备搜索开始", Toast.LENGTH_SHORT).show()
-                }
 
+                }
             }
         }catch (e:SecurityException)
         {
@@ -100,10 +102,13 @@ class BluetoothWearviewActivity : AppCompatActivity() {
     }
     override fun onStop() {
         super.onStop()
-        unregisterReceiver(scanBroadcastReceiver);
-        scanBroadcastReceiver=null
+
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+
+    }
     override fun onResume() {
         super.onResume()
         registerScanBroadcast()
@@ -111,6 +116,10 @@ class BluetoothWearviewActivity : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
+        scanBroadcastReceiver?.let {
+            this.application.unregisterReceiver(it);
+            scanBroadcastReceiver = null
+        }
     }
     fun pairListInit()
     {
@@ -129,11 +138,10 @@ class BluetoothWearviewActivity : AppCompatActivity() {
                         {
                             if(item.name==name)
                             {
-                                sendBluetoothMesg(item,"startSendHeatBeatRatio")
+                                choosed_device = item
+                                sendBluetoothMesg(item,"connect")
                                 BluetoothMesg.setBluetoothAdapter(mAdapter)
                                 GlobalStaticVariable.isWearDeviceConnect=true;
-                                Toast.makeText(baseContext, "连接成功！", Toast.LENGTH_SHORT).show()
-                                BluetoothMesgReceiver.start()
                             }
                         }
                     }
@@ -154,11 +162,9 @@ class BluetoothWearviewActivity : AppCompatActivity() {
         if (scanBroadcastReceiver == null && application != null) {
             scanBroadcastReceiver=ScanBroadcastReceiver(object :ScanBroadcastReceiver.ScanBroadcastReceiverListener{
                 override fun on_found(device: BluetoothDevice) {
-
                     device?.let {
                         try {
                             val pairedDevices: Set<BluetoothDevice> = mAdapter.getBondedDevices()
-
                             devices.put(it.name, it)
                             var slaveList_str: ArrayList<String> = arrayListOf()
                             for (item in devices) {
@@ -170,7 +176,6 @@ class BluetoothWearviewActivity : AppCompatActivity() {
                                     override fun onClick(view: View) {
                                         var name = view.getTag() as String
                                         devices.get(name)?.let {
-                                            choosed_device = it
                                             if (mAdapter.isDiscovering()) {
                                                 mAdapter.cancelDiscovery();
                                             }
